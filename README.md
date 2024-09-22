@@ -18,39 +18,37 @@ To install the MLIPFF project and its dependencies, you can use PDM.
 
 Clone the repository:
 
-bash
-Copy code
+```bash
 git clone https://github.com/Fenaven/mlipff.git
 cd mlipff
-Install the dependencies using PDM:
-
-bash
-Copy code
 pdm install
+```
 Usage
 The main script for interacting with the tool is mlipff.py. You can run it with different commands to perform various operations.
 
 Example Commands:
 Convert files:
 
-bash
-Copy code
+```bash
 python mlipff.py convert --from dump --to cfg --input input_file.dump --output output_file.cfg
+```
 Cut data:
 
-bash
-Copy code
+```bash
 python mlipff.py cut_data --data system.data --nbh nbh.dump --output output.data
+```
+
 Generate Orca input:
 
-bash
-Copy code
+```bash
 python mlipff.py create_input --xyz structure.xyz
+```
 Cut force field file:
 
-bash
-Copy code
+```bash
 python mlipff.py cut_ff --input system.in.settings --style lj/cut/coul/cut
+```
+
 Project Structure
 mlipff.py: The main entry point of the project.
 mlipff_configuration.py: Handles the configuration of molecular systems.
