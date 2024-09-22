@@ -1,0 +1,21 @@
+[project]
+name = "mlipff"
+version = "0.1.0"
+description = "MLIP-FF project"
+authors = [
+    {name = "IlyaRaven", email = "feniksaven@gmail.com"},
+]
+dependencies = [
+    "ocellar @ git+https://github.com/lsvvt/ocellar.git",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
