@@ -1,6 +1,4 @@
 # mlipff
-MLIP-FF Project
-Description
 MLIP-FF is a Python-based tool for using MTP along with classical force-fields inside LAMMPS with additional usage of MLIP. It supports various operations on molecular simulation data, including file conversion, partitioning force fields, and generating input files for quantum chemistry software such as Orca.
 
 The project is set up using PDM (Python Development Master) for dependency management and can be easily extended or adapted for other use cases.
@@ -60,6 +58,9 @@ python mlipff.py cut_ff --input system.in.settings --style lj/cut/coul/cut
 
 ## Project Structure
 mlipff.py: The main entry point of the project.
+
 mlipff_configuration.py: Handles the configuration of molecular systems.
+
 utils.py: Provides utility functions for file conversion, data manipulation, and force field partitioning.
+
 tests/: (Optional) Placeholder for unit tests.
