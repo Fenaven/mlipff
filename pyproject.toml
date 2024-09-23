@@ -8,7 +8,7 @@ authors = [
 dependencies = [
     "ocellar @ git+https://github.com/lsvvt/ocellar.git",
 ]
-requires-python = ">=3.10"
+requires-python = "==3.10.7"
 readme = "README.md"
 license = {text = "MIT"}
 
