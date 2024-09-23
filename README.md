@@ -5,7 +5,7 @@ MLIP-FF is a Python-based tool for using MTP along with classical force-fields i
 
 The project is set up using PDM (Python Development Master) for dependency management and can be easily extended or adapted for other use cases.
 
-Features
+## Features
 
 Convert Files: Convert files between different formats (e.g., from Orca or dump to cfg).
 
@@ -15,13 +15,13 @@ Generate Orca Input: Automatically generate input files for Orca from XYZ coordi
 
 Force Field Manipulation: Partition force field files based on styles.
 
-Dependencies
+## Dependencies
 
 ocellar: A package for molecular structure manipulation, installed from GitHub.
 
 Other Python libraries (listed in the pyproject.toml file).
 
-Installation:
+## Installation
 
 To install the MLIPFF project and its dependencies, you can use PDM.
 
@@ -32,7 +32,7 @@ git clone https://github.com/Fenaven/mlipff.git
 cd mlipff
 pdm install
 ```
-Usage
+## Usage
 The main script for interacting with the tool is mlipff.py. You can run it with different commands to perform various operations.
 
 Example Commands:
@@ -58,7 +58,7 @@ Cut force field file:
 python mlipff.py cut_ff --input system.in.settings --style lj/cut/coul/cut
 ```
 
-Project Structure
+## Project Structure
 mlipff.py: The main entry point of the project.
 mlipff_configuration.py: Handles the configuration of molecular systems.
 utils.py: Provides utility functions for file conversion, data manipulation, and force field partitioning.
