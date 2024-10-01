@@ -17,7 +17,7 @@ def main():
     elif args.command == "cut_data":
         cut_data(args.data_file, args.dump_file, args.output_file)
     elif args.command == "cut_ff":
-        cut_ff(args.input_file, args.style)
+        cut_ff(args.input_file, args.style, args.units)
     elif args.command == "cut_nbh":
         atom_coords = list(map(float, args.atom_coords.split(",")))
         cut_nbh(args.input_file, args.output_base, atom_coords, args.radius, args.cut)

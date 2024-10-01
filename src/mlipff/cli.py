@@ -83,6 +83,12 @@ def get_parser():
         default="lj/cut/coul/cut",
         help="Pair style to use in output.",
     )
+    cut_ff_parser.add_argument(
+        "--units",
+        dest="units",
+        default="metal",
+        help="Units to use in output.",
+    )
 
     # Create_input command
     input_parser = subparsers.add_parser(

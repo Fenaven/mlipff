@@ -222,7 +222,11 @@ def modify_lammps_data(data_file, xyz_file):
         f.writelines(data_lines)
 
 
-def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long"):
+def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long", units = 'metal'):
+    if units == 'real':
+        scaling_factor = 1
+    elif units == 'metal':
+        scaling_factor = 0.0433641 # 1 kcal/mol = 0.0433641 eV
     # Get the directory of the input file
     input_dir = os.path.dirname(os.path.abspath(input_filename))
 
@@ -242,7 +246,16 @@ def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long"):
             if "pair_coeff" in line:
                 parsed = line.split(" ")
                 start, end = parsed[:3], parsed[3:]
+                end[0] *= scaling_factor
                 pair_file.write(f"{' '.join(start)} {style} {' '.join(end)}")
+            elif ("bond_coeff" in line) or ("angle_coeff" in line) or ("improper_coeff" in line):
+                parsed = line.split(" ")
+                parsed[2] *= scaling_factor
+                pair_file.write(f"{' '.join(parsed)}")
+            elif ("dihedral_coeff" in line):
+                parsed = line.split(" ")
+                parsed[2:6] *= scaling_factor
+                pair_file.write(f"{' '.join(parsed)}")
             else:
                 other_file.write(line)
 
