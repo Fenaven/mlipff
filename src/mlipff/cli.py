@@ -1,5 +1,6 @@
 import argparse
 
+
 def get_parser():
     parser = argparse.ArgumentParser(
         description="Tool for converting and manipulating configuration files."
@@ -89,10 +90,26 @@ def get_parser():
         help="Create Orca input file using .xyz file",
     )
     input_parser.add_argument(
+        "--orca",
+        action="store_true",
+        help="Create input for Orca",
+    )
+    input_parser.add_argument(
+        "--lmp",
+        action="store_true",
+        help="Create input for LAMMPS",
+    )
+    input_parser.add_argument(
+        "--input",
+        dest="input_file",
+        required=True,
+        help="input file path.",
+    )
+    input_parser.add_argument(
         "--xyz",
         dest="xyz_file",
         required=True,
-        help="XYZ file path.",
+        help="xyz file path.",
     )
 
     # Cut_nbh command
@@ -124,14 +141,15 @@ def get_parser():
         required=True,
         help="Radius of the selection sphere.",
     )
-    
+
     cut_nbh_parser.add_argument(
         "--cut",
-        action='store_true',
+        action="store_true",
         help="If True, then cut molecules and add H to xyz file.",
     )
-        
+
     return parser
+
 
 def parse_arguments():
     return get_parser().parse_args()

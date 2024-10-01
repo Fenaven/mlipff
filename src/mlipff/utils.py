@@ -30,11 +30,14 @@ def cut_data(data_file, dump_file, output_file):
     tmp2_path = os.path.join(tmp_dir, "tmp2.txt")
     tmp3_path = os.path.join(tmp_dir, "tmp3.txt")
 
-    with open(data_file, "r") as datafile, open(dump_file, "r") as dumpfile, open(
-        tmp1_path, "w"
-    ) as tmp1, open(tmp2_path, "w") as tmp2, open(tmp3_path, "w") as tmp3, open(
-        output_file, "w"
-    ) as output:
+    with (
+        open(data_file, "r") as datafile,
+        open(dump_file, "r") as dumpfile,
+        open(tmp1_path, "w") as tmp1,
+        open(tmp2_path, "w") as tmp2,
+        open(tmp3_path, "w") as tmp3,
+        open(output_file, "w") as output,
+    ):
         ids = set()
         read_number = False
         read_atoms = False
@@ -142,26 +145,81 @@ def cut_data(data_file, dump_file, output_file):
     shutil.rmtree(tmp_dir)
 
 
-def generate_orca_input(xyz_filename):
-
-    input_lines = """\
-    !ENGRAD PBE0 def2-SVP
-    *xyzfile 0 1 {xyz_filename}
-    
-    """
-
+def generate_orca_input(input_file, xyz_filename: str):
     # Check if the file exists and has the correct extension
-    if not xyz_filename.endswith(".xyz") or not os.path.isfile(xyz_filename):
+    if not os.path.isfile(xyz_filename):
         print("Error: Please provide a valid .xyz file.")
         return
+    if not os.path.isfile(input_file):
+        print("Error: Please provide a valid input file.")
+        return
 
-    inp_filename = os.path.splitext(xyz_filename)[0] + ".inp"
+    if not xyz_filename.endswith(".xyz"):
+        xyz_filename = xyz_filename.replace(".xyz", "")
+        xyz_filename += ".xyz"
 
-    try:
-        with open(inp_filename, "w") as inpfile:
-            inpfile.write(input_lines.format(xyz_filename=xyz_filename))
-    except IOError as e:
-        print(f"Error writing to file {inp_filename}: {e}")
+    with open(input_file, "r") as file:
+        lines = file.readlines()
+    # Modify the line containing 'xyz_filename'
+    for i, line in enumerate(lines):
+        if "*xyzfile" in line:
+            success = True
+            parts = line.split()
+            # Replace the last part with the new filename
+            if len(parts) == 4:
+                parts[-1] = xyz_filename
+                lines[i] = " ".join(parts) + "\n"
+            elif len(parts) == 3:
+                parts.append(f" {xyz_filename}")
+            break
+    if not success:
+        print("Error: Please provide a valid input file containing *xyzfile signature")
+        return
+    out_filename = xyz_filename.replace(".xyz", ".inp")
+    # Write the modified lines to a new output file
+    with open(out_filename, "w") as file:
+        file.writelines(lines)
+
+
+def modify_lammps_data(data_file, xyz_file):
+    # Read the xyz file
+    with open(xyz_file, "r") as f:
+        xyz_lines = f.readlines()
+
+    # Extract coordinates from the xyz file
+    num_atoms = int(xyz_lines[0].strip())
+    coordinates = []
+    for line in xyz_lines[2 : 2 + num_atoms]:
+        parts = line.split()
+        coordinates.append(parts[1:])  # Append x, y, z coordinates
+
+    # Read and modify the .data file
+    with open(data_file, "r") as f:
+        data_lines = f.readlines()
+
+    in_atoms_section = False
+    atom_count = 0
+    for i, line in enumerate(data_lines):
+        if "Atoms" in line:
+            in_atoms_section = True
+            continue
+        if in_atoms_section and line.strip() == "":
+            # End of "Atoms" section
+            in_atoms_section = False
+        if in_atoms_section:
+            # Modify lines in the "Atoms" section
+            parts = line.split()
+            # Replace the last three elements with new coordinates
+            parts[-3:] = coordinates[atom_count]
+            data_lines[i] = " ".join(parts) + "\n"
+            atom_count += 1
+            if atom_count >= num_atoms:
+                break
+
+    output_name = xyz_file.replace(".xyz", ".data")
+    # Write the modified content to a new output file
+    with open(output_name, "w") as f:
+        f.writelines(data_lines)
 
 
 def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long"):
@@ -173,9 +231,11 @@ def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long"):
     other_file_path = os.path.join(input_dir, "other_coefs.ff")
 
     # Open the input file and two output files
-    with open(input_filename, "r") as ff_file, open(
-        pair_file_path, "w"
-    ) as pair_file, open(other_file_path, "w") as other_file:
+    with (
+        open(input_filename, "r") as ff_file,
+        open(pair_file_path, "w") as pair_file,
+        open(other_file_path, "w") as other_file,
+    ):
 
         # Process the input file
         for line in ff_file:
@@ -206,7 +266,7 @@ def cut_nbh(input_name, out_base, atom_coords, radius, cut):
     mol.save_dump(
         out_dump, mol.input_geometry, idxs
     )  # Save dump file using original dump and idxs
-    
+
     new_mol.build_graph()
     new_mol.build_structure(cut_molecule=cut)
     new_mol.save_xyz(out_xyz)
