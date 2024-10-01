@@ -246,15 +246,15 @@ def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long", units 
             if "pair_coeff" in line:
                 parsed = line.split(" ")
                 start, end = parsed[:3], parsed[3:]
-                end[0] *= scaling_factor
+                end[0] = str(float(end[0])*scaling_factor)
                 pair_file.write(f"{' '.join(start)} {style} {' '.join(end)}")
             elif ("bond_coeff" in line) or ("angle_coeff" in line) or ("improper_coeff" in line):
                 parsed = line.split(" ")
-                parsed[2] *= scaling_factor
+                parsed[2] = str(float(parsed[2])*scaling_factor)
                 pair_file.write(f"{' '.join(parsed)}")
             elif ("dihedral_coeff" in line):
                 parsed = line.split(" ")
-                parsed[2:6] *= scaling_factor
+                parsed[2:6] = list(map(float, parsed[2:6]))*scaling_factor
                 pair_file.write(f"{' '.join(parsed)}")
             else:
                 other_file.write(line)
