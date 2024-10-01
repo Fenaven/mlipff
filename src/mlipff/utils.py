@@ -222,11 +222,13 @@ def modify_lammps_data(data_file, xyz_file):
         f.writelines(data_lines)
 
 
-def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long", units = 'metal'):
-    if units == 'real':
+def cut_ff(
+    input_filename="system.in.settings", style="lj/cut/coul/long", units="metal"
+):
+    if units == "real":
         scaling_factor = 1
-    elif units == 'metal':
-        scaling_factor = 0.0433641 # 1 kcal/mol = 0.0433641 eV
+    elif units == "metal":
+        scaling_factor = 0.0433641  # 1 kcal/mol = 0.0433641 eV
     # Get the directory of the input file
     input_dir = os.path.dirname(os.path.abspath(input_filename))
 
@@ -239,6 +241,7 @@ def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long", units 
         open(input_filename, "r") as ff_file,
         open(pair_file_path, "w") as pair_file,
         open(other_file_path, "w") as other_file,
+        open(f"{input_filename}_{units}", "w") as ff_file_units,
     ):
 
         # Process the input file
@@ -246,18 +249,26 @@ def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long", units 
             if "pair_coeff" in line:
                 parsed = line.split(" ")
                 start, end = parsed[:3], parsed[3:]
-                end[0] = str(float(end[0])*scaling_factor)
+                end[0] = str(float(end[0]) * scaling_factor)
                 pair_file.write(f"{' '.join(start)} {style} {' '.join(end)}")
-            elif ("bond_coeff" in line) or ("angle_coeff" in line) or ("improper_coeff" in line):
+                ff_file_units.write(f"{' '.join(start)} {' '.join(end)}")
+            elif (
+                ("bond_coeff" in line)
+                or ("angle_coeff" in line)
+                or ("improper_coeff" in line)
+            ):
                 parsed = line.split(" ")
-                parsed[2] = str(float(parsed[2])*scaling_factor)
+                parsed[2] = str(float(parsed[2]) * scaling_factor)
                 pair_file.write(f"{' '.join(parsed)}")
-            elif ("dihedral_coeff" in line):
+                ff_file_units.write(f"{' '.join(parsed)}")
+            elif "dihedral_coeff" in line:
                 parsed = line.split(" ")
-                parsed[2:6] = [str(x*scaling_factor) for x in map(float, parsed[2:6])]
+                parsed[2:6] = [str(x * scaling_factor) for x in map(float, parsed[2:6])]
                 pair_file.write(f"{' '.join(parsed)}\n")
+                ff_file_units.write(f"{' '.join(parsed)}")
             else:
                 other_file.write(line)
+                ff_file_units.write(line)
 
 
 def cut_nbh(input_name, out_base, atom_coords, radius, cut):
