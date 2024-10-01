@@ -255,7 +255,7 @@ def cut_ff(input_filename="system.in.settings", style="lj/cut/coul/long", units 
             elif ("dihedral_coeff" in line):
                 parsed = line.split(" ")
                 parsed[2:6] = [str(x*scaling_factor) for x in map(float, parsed[2:6])]
-                pair_file.write(f"{' '.join(parsed)}")
+                pair_file.write(f"{' '.join(parsed)}\n")
             else:
                 other_file.write(line)
 
