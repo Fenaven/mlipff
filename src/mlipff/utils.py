@@ -259,12 +259,12 @@ def cut_ff(
             ):
                 parsed = line.split(" ")
                 parsed[2] = str(float(parsed[2]) * scaling_factor)
-                pair_file.write(f"{' '.join(parsed)}")
+                other_file.write(f"{' '.join(parsed)}")
                 ff_file_units.write(f"{' '.join(parsed)}")
             elif "dihedral_coeff" in line:
                 parsed = line.split(" ")
                 parsed[2:6] = [str(x * scaling_factor) for x in map(float, parsed[2:6])]
-                pair_file.write(f"{' '.join(parsed)}\n")
+                other_file.write(f"{' '.join(parsed)}\n")
                 ff_file_units.write(f"{' '.join(parsed)}\n")
             else:
                 other_file.write(line)
