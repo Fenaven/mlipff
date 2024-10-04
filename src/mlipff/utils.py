@@ -5,13 +5,13 @@ from mlipff_configuration import Configuration
 from ocellar import molecule
 
 
-def convert(from_format, to_format, input_file, output_file):
+def convert(from_format, to_format, input_file, output_file, replace_file):
     config = Configuration()
 
     if from_format == "dump":
-        config.read_dump(input_file)
+        config.read_dump(input_file, True, replace_file)
     elif from_format == "orca":
-        config.read_orca_dump(input_file)
+        config.read_orca_dump(input_file, replace_file)
     else:
         print(f"Unsupported input format: {from_format}")
         return

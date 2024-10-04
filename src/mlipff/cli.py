@@ -41,6 +41,12 @@ def get_parser():
         required=True,
         help="Output file path.",
     )
+    
+    convert_parser.add_argument(
+        "--replace_types",
+        dest="replace_file",
+        help="File for type replacement",
+    )
 
     # Cut_data command
     cut_data_parser = subparsers.add_parser(
