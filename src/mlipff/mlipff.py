@@ -13,7 +13,13 @@ def main():
     args = parse_arguments()
 
     if args.command == "convert":
-        convert(args.from_format, args.to_format, args.input_file, args.output_file, args.replace_file)
+        convert(
+            args.from_format,
+            args.to_format,
+            args.input_file,
+            args.output_file,
+            args.replace_file,
+        )
     elif args.command == "cut_data":
         cut_data(args.data_file, args.dump_file, args.output_file)
     elif args.command == "cut_ff":

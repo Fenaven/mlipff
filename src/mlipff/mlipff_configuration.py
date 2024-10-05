@@ -131,11 +131,11 @@ class Configuration:
         """
         type_replacement_dict = {}
         if replace_types:
-            with open(replace_types, 'r') as file:
+            with open(replace_types, "r") as file:
                 for line in file:
                     old_type, new_type = line.strip().split()
                     type_replacement_dict[int(old_type)] = int(new_type)
-        
+
         with open(file_path, "r") as lmp_dump:
             lines = lmp_dump.readlines()
 
@@ -176,7 +176,7 @@ class Configuration:
                 atoms_data = list(map(float, line.split()))
                 atom_type = int(atoms_data[1] - 1)
                 if atom_type in type_replacement_dict:
-                    atom_type = int(type_replacement_dict[atom_type+1] - 1)
+                    atom_type = int(type_replacement_dict[atom_type + 1] - 1)
                 pos_x, pos_y, pos_z = atoms_data[
                     coordinates_start_index : coordinates_start_index + 3
                 ]

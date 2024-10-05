@@ -243,7 +243,6 @@ def cut_ff(
         open(other_file_path, "w") as other_file,
         open(f"{input_filename}_{units}", "w") as ff_file_units,
     ):
-
         # Process the input file
         for line in ff_file:
             if "pair_coeff" in line:

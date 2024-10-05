@@ -41,7 +41,7 @@ def get_parser():
         required=True,
         help="Output file path.",
     )
-    
+
     convert_parser.add_argument(
         "--replace_types",
         dest="replace_file",
