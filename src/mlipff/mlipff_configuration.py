@@ -1,3 +1,7 @@
+import os
+from typing import Optional, List, Dict, Union
+
+
 class Configuration:
     """
     A class to represent a single configuration of atoms.
@@ -20,13 +24,31 @@ class Configuration:
 
     def __init__(
         self,
-        size=None,
-        atom_data=None,
-        supercell=None,
-        energy=None,
-        plus_stress=None,
-        features=None,
-    ):
+        size: Optional[int] = None,
+        atom_data: Optional[List[Dict[str, Union[int, float]]]] = None,
+        supercell: Optional[List[float]] = None,
+        energy: Optional[float] = None,
+        plus_stress: Optional[Dict[str, float]] = None,
+        features: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """
+        Initializes the Configuration object with optional attributes.
+
+        Parameters
+        ----------
+        size : Optional[int]
+            The number of atoms in the configuration.
+        atom_data : Optional[List[Dict[str, Union[int, float]]]]
+            The list of atom data.
+        supercell : Optional[List[float]]
+            The supercell matrix.
+        energy : Optional[float]
+            The energy of the configuration.
+        plus_stress : Optional[Dict[str, float]]
+            Stress information of the configuration.
+        features : Optional[Dict[str, str]]
+            Additional features of the configuration.
+        """
         self.size = size
         self.atom_data = atom_data
         self.supercell = supercell or []
@@ -34,8 +56,15 @@ class Configuration:
         self.plus_stress = plus_stress or {}
         self.features = features or {}
 
-    def read_cfg(self, file_path):
-        """Reads a single configuration from a .cfg file."""
+    def read_cfg(self, file_path: str) -> None:
+        """
+        Reads a single configuration from a .cfg file.
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the .cfg file to read from.
+        """
         with open(file_path, "r") as file:
             atom_data = []
             reading_atoms = False
@@ -94,8 +123,15 @@ class Configuration:
                         feature_value = feature_parts[2]
                         self.features[feature_name] = feature_value
 
-    def write_cfg(self, file_path):
-        """Writes the configuration to a .cfg file."""
+    def write_cfg(self, file_path: str) -> None:
+        """
+        Writes the configuration to a .cfg file.
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the .cfg file to write to.
+        """
         with open(file_path, "w") as file:
             file.write("BEGIN_CFG\n")
             file.write(f"Size\n{self.size}\n")
@@ -118,7 +154,9 @@ class Configuration:
                     file.write(f"Feature {name} {value}\n")
             file.write("END_CFG\n\n")
 
-    def read_dump(self, file_path, include_efs, replace_types):
+    def read_dump(
+        self, file_path: str, include_efs: bool, replace_types: Optional[str]
+    ) -> None:
         """
         Reads a LAMMPS .dump file and populates the configuration attributes.
         Columns of dump file should be:
@@ -132,6 +170,8 @@ class Configuration:
             The path to the .dump file to read from.
         include_efs : bool
             Whether to include energy, forces, and stress data.
+        replace_types : Optional[str]
+            The path to the file containing type replacement information.
         """
         type_replacement_dict = {}
         if replace_types:
@@ -206,106 +246,24 @@ class Configuration:
 
         self.atom_data = data
 
-    def read_orca_dump(self, filename, replace_types):
+    def read_orca(
+        self, filename: str, substract: bool, replace_types: Optional[str]
+    ) -> None:
         """
-        Reads ORCA .log and LAMMPS .dump files located in the same folder,
-        creating substracted configuration QM - MM
+        Reads ORCA .log and LAMMPS .dump files, creating QM configuration.
 
         Parameters
         ----------
         filename : str
             The base filename (without extension) of the .log and .dump files.
-        replace_types : str
-            The filanem of file which contains information for replacing atomic types
-            e.g.
-            2 1
-            3 1
-            will make 2 -> 1 and 3 -> 1 replacement of atomic types
+        replace_types : Optional[str]
+            The filename of a file which contains information for replacing atomic types.
         """
 
-        if len(filename.split(".")) != 1:
-            filename = filename.split(".")[0]
-        logname = f"{filename}.log"
-        dumpname = f"{filename}.dump"
-
-        # Constants
-        Eh = 27.2113834
-        Bohr = 0.5291772083
-
-        # Read initial configuration from .dump file
-        mm_config = Configuration()
-        mm_config.read_dump(dumpname, True, replace_types)
-
-        # Create a new configuration with the same atomic positions but different forces/energy
-        qm_config = Configuration(
-            size=mm_config.size,
-            atom_data=[
-                {
-                    "id": atom["id"],
-                    "type": atom["type"],
-                    "cartes_x": atom["cartes_x"],
-                    "cartes_y": atom["cartes_y"],
-                    "cartes_z": atom["cartes_z"],
-                    "fx": atom["fx"],
-                    "fy": atom["fy"],
-                    "fz": atom["fz"],
-                }
-                for atom in mm_config.atom_data
-            ],
-            supercell=mm_config.supercell,
-            energy=mm_config.energy,
-        )
-
-        # Read forces and energy from .log file
-        with open(logname, "r") as logfile:
-            lines = logfile.readlines()
-
-        try:
-            energy_line = next(
-                line for line in lines if "FINAL SINGLE POINT ENERGY" in line
-            )
-            qm_energy = float(energy_line.split()[4]) * Eh - mm_config.energy
-        except StopIteration:
-            raise ValueError("Energy not found in ORCA log file")
-
-        qm_config.energy = qm_energy
-
-        try:
-            grad_start = lines.index("CARTESIAN GRADIENT\n") + 3
-            for atom, line in zip(qm_config.atom_data, lines[grad_start:]):
-                force_data = list(map(float, line.split()[3:6]))
-                atom["fx"] = -force_data[0] * Eh / Bohr - atom["fx"]
-                atom["fy"] = -force_data[1] * Eh / Bohr - atom["fy"]
-                atom["fz"] = -force_data[2] * Eh / Bohr - atom["fz"]
-        except (ValueError, IndexError):
-            raise ValueError("Gradient data not found or incomplete in ORCA log file")
-
-        # Replace the original configuration's atom data and energy with updated values
-        self.size = qm_config.size
-        self.atom_data = qm_config.atom_data
-        self.supercell = []
-        self.energy = qm_config.energy
-
-    def read_orca(self, filename, replace_types):
-        """
-        Reads ORCA .log and LAMMPS .dump files, creating QM configuration
-
-        Parameters
-        ----------
-        filename : str
-            The base filename (without extension) of the .log and .dump files.
-        replace_types : str
-            The filanem of file which contains information for replacing atomic types
-            e.g.
-            2 1
-            3 1
-            will make 2 -> 1 and 3 -> 1 replacement of atomic types
-        """
-
-        if len(filename.split(".")) != 1:
-            filename = filename.split(".")[0]
-        logname = f"{filename}.log"
-        dumpname = f"{filename}.dump"
+        # Extract the base name without extension
+        base_filename = os.path.splitext(filename)[0]
+        logname = f"{base_filename}.log"
+        dumpname = f"{base_filename}.dump"
 
         # Constants
         Eh = 27.2113834
@@ -344,6 +302,8 @@ class Configuration:
                 line for line in lines if "FINAL SINGLE POINT ENERGY" in line
             )
             qm_energy = float(energy_line.split()[4]) * Eh
+            if substract:
+                qm_energy -= mm_config.energy
         except StopIteration:
             raise ValueError("Energy not found in ORCA log file")
 
@@ -353,9 +313,14 @@ class Configuration:
             grad_start = lines.index("CARTESIAN GRADIENT\n") + 3
             for atom, line in zip(qm_config.atom_data, lines[grad_start:]):
                 force_data = list(map(float, line.split()[3:6]))
+                old_fxyz = [atom["fx"], atom["fy"], atom["fz"]]
                 atom["fx"] = -force_data[0] * Eh / Bohr
                 atom["fy"] = -force_data[1] * Eh / Bohr
                 atom["fz"] = -force_data[2] * Eh / Bohr
+                if substract:
+                    atom["fx"] -= old_fxyz[0]
+                    atom["fy"] -= old_fxyz[1]
+                    atom["fz"] -= old_fxyz[2]
         except (ValueError, IndexError):
             raise ValueError("Gradient data not found or incomplete in ORCA log file")
 
@@ -365,8 +330,20 @@ class Configuration:
         self.supercell = []
         self.energy = qm_config.energy
 
-    def __sub__(self, other):
-        """Subtracts the fields fx, fy, fz, Energy, and PlusStress from another Configuration object."""
+    def __sub__(self, other: "Configuration") -> "Configuration":
+        """
+        Subtracts the fields fx, fy, fz, Energy, and PlusStress from another Configuration object.
+
+        Parameters
+        ----------
+        other : Configuration
+            The other Configuration object to subtract from this one.
+
+        Returns
+        -------
+        Configuration
+            A new Configuration object with the subtracted fields.
+        """
         new_atom_data = []
         for atom1, atom2 in zip(self.atom_data, other.atom_data):
             new_atom = {}
