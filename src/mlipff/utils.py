@@ -10,8 +10,10 @@ def convert(from_format, to_format, input_file, output_file, replace_file):
 
     if from_format == "dump":
         config.read_dump(input_file, True, replace_file)
-    elif from_format == "orca":
+    elif from_format == "orcadump":
         config.read_orca_dump(input_file, replace_file)
+    elif from_format == "orca":
+        config.read_orca(input_file, replace_file)
     else:
         print(f"Unsupported input format: {from_format}")
         return

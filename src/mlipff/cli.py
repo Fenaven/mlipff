@@ -18,7 +18,7 @@ def get_parser():
     convert_parser.add_argument(
         "--from",
         dest="from_format",
-        choices=["dump", "orca"],
+        choices=["dump", "orca", "orcadump"],
         required=True,
         help="Input format.",
     )

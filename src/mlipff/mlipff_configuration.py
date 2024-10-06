@@ -121,6 +121,10 @@ class Configuration:
     def read_dump(self, file_path, include_efs, replace_types):
         """
         Reads a LAMMPS .dump file and populates the configuration attributes.
+        Columns of dump file should be:
+        id type mass x y z fx fy fz c_pe
+        id and type should be always on 1 and 2 place, position of xyz and forces+energy may vary,
+        but the order x y z should be followed, as well as fx fy fz c_pe
 
         Parameters
         ----------
@@ -204,13 +208,19 @@ class Configuration:
 
     def read_orca_dump(self, filename, replace_types):
         """
-        Reads ORCA .log and LAMMPS .dump files, creating substracted configuration
-        QM - MM
+        Reads ORCA .log and LAMMPS .dump files located in the same folder,
+        creating substracted configuration QM - MM
 
         Parameters
         ----------
         filename : str
             The base filename (without extension) of the .log and .dump files.
+        replace_types : str
+            The filanem of file which contains information for replacing atomic types
+            e.g.
+            2 1
+            3 1
+            will make 2 -> 1 and 3 -> 1 replacement of atomic types
         """
 
         if len(filename.split(".")) != 1:
@@ -267,6 +277,85 @@ class Configuration:
                 atom["fx"] = -force_data[0] * Eh / Bohr - atom["fx"]
                 atom["fy"] = -force_data[1] * Eh / Bohr - atom["fy"]
                 atom["fz"] = -force_data[2] * Eh / Bohr - atom["fz"]
+        except (ValueError, IndexError):
+            raise ValueError("Gradient data not found or incomplete in ORCA log file")
+
+        # Replace the original configuration's atom data and energy with updated values
+        self.size = qm_config.size
+        self.atom_data = qm_config.atom_data
+        self.supercell = []
+        self.energy = qm_config.energy
+
+    def read_orca(self, filename, replace_types):
+        """
+        Reads ORCA .log and LAMMPS .dump files, creating QM configuration
+
+        Parameters
+        ----------
+        filename : str
+            The base filename (without extension) of the .log and .dump files.
+        replace_types : str
+            The filanem of file which contains information for replacing atomic types
+            e.g.
+            2 1
+            3 1
+            will make 2 -> 1 and 3 -> 1 replacement of atomic types
+        """
+
+        if len(filename.split(".")) != 1:
+            filename = filename.split(".")[0]
+        logname = f"{filename}.log"
+        dumpname = f"{filename}.dump"
+
+        # Constants
+        Eh = 27.2113834
+        Bohr = 0.5291772083
+
+        # Read initial configuration from .dump file
+        mm_config = Configuration()
+        mm_config.read_dump(dumpname, True, replace_types)
+
+        # Create a new configuration with the same atomic positions but different forces/energy
+        qm_config = Configuration(
+            size=mm_config.size,
+            atom_data=[
+                {
+                    "id": atom["id"],
+                    "type": atom["type"],
+                    "cartes_x": atom["cartes_x"],
+                    "cartes_y": atom["cartes_y"],
+                    "cartes_z": atom["cartes_z"],
+                    "fx": atom["fx"],
+                    "fy": atom["fy"],
+                    "fz": atom["fz"],
+                }
+                for atom in mm_config.atom_data
+            ],
+            supercell=mm_config.supercell,
+            energy=mm_config.energy,
+        )
+
+        # Read forces and energy from .log file
+        with open(logname, "r") as logfile:
+            lines = logfile.readlines()
+
+        try:
+            energy_line = next(
+                line for line in lines if "FINAL SINGLE POINT ENERGY" in line
+            )
+            qm_energy = float(energy_line.split()[4]) * Eh
+        except StopIteration:
+            raise ValueError("Energy not found in ORCA log file")
+
+        qm_config.energy = qm_energy
+
+        try:
+            grad_start = lines.index("CARTESIAN GRADIENT\n") + 3
+            for atom, line in zip(qm_config.atom_data, lines[grad_start:]):
+                force_data = list(map(float, line.split()[3:6]))
+                atom["fx"] = -force_data[0] * Eh / Bohr
+                atom["fy"] = -force_data[1] * Eh / Bohr
+                atom["fz"] = -force_data[2] * Eh / Bohr
         except (ValueError, IndexError):
             raise ValueError("Gradient data not found or incomplete in ORCA log file")
 
