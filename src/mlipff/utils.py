@@ -1,9 +1,26 @@
 import os
+from typing import Set
 from mlipff_configuration import Configuration
 from ocellar import molecule
 
 
-def convert(from_format, to_format, input_file, output_file, replace_file):
+def convert(
+    from_format: str,
+    to_format: str,
+    input_file: str,
+    output_file: str,
+    replace_file: str,
+) -> None:
+    """
+    Convert a file from one format to another using the provided configuration.
+
+    Parameters:
+    from_format (str): The input file format.
+    to_format (str): The desired output file format.
+    input_file (str): Path to the input file.
+    output_file (str): Path to the output file.
+    replace_file (str): Path to the replace file for configuration.
+    """
     config = Configuration()
 
     if from_format == "dump":
@@ -22,18 +39,26 @@ def convert(from_format, to_format, input_file, output_file, replace_file):
         print(f"Unsupported output format: {to_format}")
 
 
-def cut_data(data_file, dump_file, output_file):
+def cut_data(data_file: str, dump_file: str, output_file: str) -> None:
+    """
+    Cut data from the data file based on atom IDs present in the dump file and write to the output file.
+
+    Parameters:
+    data_file (str): Path to the data file.
+    dump_file (str): Path to the dump file.
+    output_file (str): Path to the output file.
+    """
     with (
         open(data_file, "r", encoding="utf-8") as datafile,
         open(dump_file, "r", encoding="utf-8") as dumpfile,
         open(output_file, "w", encoding="utf-8", newline="\n") as output,
     ):
-        ids = set()
-        atom_types = set()
-        bond_types = set()
-        angle_types = set()
-        dihedral_types = set()
-        improper_types = set()
+        ids: Set[int] = set()
+        atom_types: Set[int] = set()
+        bond_types: Set[int] = set()
+        angle_types: Set[int] = set()
+        dihedral_types: Set[int] = set()
+        improper_types: Set[int] = set()
 
         # Parse dumpfile to collect atom IDs
         for line in dumpfile:
@@ -75,7 +100,18 @@ def cut_data(data_file, dump_file, output_file):
 
         current_section = "header"
 
-        def handle_section(line, ids, content, section):
+        def handle_section(
+            line: str, ids: Set[int], content: list, section: str
+        ) -> None:
+            """
+            Handle the parsing of a section in the data file and update the content accordingly.
+
+            Parameters:
+            line (str): The current line being processed.
+            ids (Set[int]): The set of atom IDs.
+            content (list): The list to store content for the output file.
+            section (str): The current section being processed.
+            """
             if line.strip() == "":
                 content.append(line.rstrip() + "\n")
             else:
@@ -169,7 +205,14 @@ def cut_data(data_file, dump_file, output_file):
         output.writelines(tmp_content)
 
 
-def generate_orca_input(input_file, xyz_filename: str):
+def generate_orca_input(input_file: str, xyz_filename: str) -> None:
+    """
+    Generate an ORCA input file using the specified input and .xyz file.
+
+    Parameters:
+    input_file (str): Path to the input file.
+    xyz_filename (str): Path to the .xyz file.
+    """
     # Check if the file exists and has the correct extension
     if not os.path.isfile(xyz_filename):
         print("Error: Please provide a valid .xyz file.")
@@ -185,6 +228,7 @@ def generate_orca_input(input_file, xyz_filename: str):
     with open(input_file, "r") as file:
         lines = file.readlines()
     # Modify the line containing 'xyz_filename'
+    success = False
     for i, line in enumerate(lines):
         if "*xyzfile" in line:
             success = True
@@ -205,7 +249,14 @@ def generate_orca_input(input_file, xyz_filename: str):
         file.writelines(lines)
 
 
-def modify_lammps_data(data_file, xyz_file):
+def modify_lammps_data(data_file: str, xyz_file: str) -> None:
+    """
+    Modify the LAMMPS data file based on coordinates from the .xyz file.
+
+    Parameters:
+    data_file (str): Path to the LAMMPS data file.
+    xyz_file (str): Path to the .xyz file.
+    """
     # Read the xyz file
     with open(xyz_file, "r") as f:
         xyz_lines = f.readlines()
@@ -247,8 +298,18 @@ def modify_lammps_data(data_file, xyz_file):
 
 
 def cut_ff(
-    input_filename="system.in.settings", style="lj/cut/coul/long", units="metal"
-):
+    input_filename: str = "system.in.settings",
+    style: str = "lj/cut/coul/long",
+    units: str = "metal",
+) -> None:
+    """
+    Cut force field data from the input file and save it into separate coefficient files.
+
+    Parameters:
+    input_filename (str): Path to the input force field file.
+    style (str): Style for pair coefficients.
+    units (str): Units used in the force field file.
+    """
     if units == "real":
         scaling_factor = 1
     elif units == "metal":
@@ -294,7 +355,20 @@ def cut_ff(
                 ff_file_units.write(line)
 
 
-def cut_nbh(input_name, out_base, atom_coords, radius, cut):
+def cut_nbh(
+    input_name: str, out_base: str, atom_coords: str, radius: float, cut: bool
+) -> None:
+    """
+    Cut neighborhood atoms from a molecular structure file.
+
+    Parameters:
+    input_name (str): Path to the input file.
+    out_base (str): Base name for the output files.
+    atom_coords (str): Coordinates for the center of the neighborhood.
+    radius (float): Radius for selecting atoms.
+    cut (bool): Whether to cut the molecule.
+    """
+    out_base = os.path.splitext(out_base)[0]
     out_dump = str(out_base) + ".dump"
     out_xyz = str(out_base) + ".xyz"
     # from dump
