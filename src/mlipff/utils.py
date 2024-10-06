@@ -1,6 +1,4 @@
-import random
 import os
-import shutil
 from mlipff_configuration import Configuration
 from ocellar import molecule
 
@@ -25,126 +23,150 @@ def convert(from_format, to_format, input_file, output_file, replace_file):
 
 
 def cut_data(data_file, dump_file, output_file):
-    tmp_num = random.randint(100000, 999999)
-    tmp_dir = f"data_tmp_{tmp_num}"
-    os.mkdir(tmp_dir)
-    tmp1_path = os.path.join(tmp_dir, "tmp1.txt")
-    tmp2_path = os.path.join(tmp_dir, "tmp2.txt")
-    tmp3_path = os.path.join(tmp_dir, "tmp3.txt")
-
     with (
-        open(data_file, "r") as datafile,
-        open(dump_file, "r") as dumpfile,
-        open(tmp1_path, "w") as tmp1,
-        open(tmp2_path, "w") as tmp2,
-        open(tmp3_path, "w") as tmp3,
-        open(output_file, "w") as output,
+        open(data_file, "r", encoding="utf-8") as datafile,
+        open(dump_file, "r", encoding="utf-8") as dumpfile,
+        open(output_file, "w", encoding="utf-8", newline="\n") as output,
     ):
         ids = set()
-        read_number = False
-        read_atoms = False
+        atom_types = set()
+        bond_types = set()
+        angle_types = set()
+        dihedral_types = set()
+        improper_types = set()
 
+        # Parse dumpfile to collect atom IDs
         for line in dumpfile:
             if "ITEM: NUMBER" in line:
-                read_number = True
-                continue
-            if read_number:
-                atom_number = int(line.strip())
-                read_number = False
-            if "ITEM: ATOMS" in line:
-                read_atoms = True
-                continue
-            if read_atoms:
-                ids.add(int(line.split()[0]))
-                if len(ids) == atom_number:
+                atom_number = int(next(dumpfile).strip())
+            elif "ITEM: ATOMS" in line:
+                for _ in range(atom_number):
+                    ids.add(int(next(dumpfile).split()[0]))
+
+        counts = {
+            "atoms": 0,
+            "bonds": 0,
+            "angles": 0,
+            "dihedrals": 0,
+            "impropers": 0,
+        }
+        type_sets = {
+            "atoms": atom_types,
+            "bonds": bond_types,
+            "angles": angle_types,
+            "dihedrals": dihedral_types,
+            "impropers": improper_types,
+        }
+        tmp_content = []
+
+        # State machine for parsing different sections of the datafile
+        section_handlers = {
+            "header": lambda line: tmp_content.append(line.rstrip() + "\n"),
+            "atoms": lambda line: handle_section(line, ids, tmp_content, "atoms"),
+            "bonds": lambda line: handle_section(line, ids, tmp_content, "bonds"),
+            "angles": lambda line: handle_section(line, ids, tmp_content, "angles"),
+            "dihedrals": lambda line: handle_section(
+                line, ids, tmp_content, "dihedrals"
+            ),
+            "impropers": lambda line: handle_section(
+                line, ids, tmp_content, "impropers"
+            ),
+        }
+
+        current_section = "header"
+
+        def handle_section(line, ids, content, section):
+            if line.strip() == "":
+                content.append(line.rstrip() + "\n")
+            else:
+                splitted_line = line.split()
+                type_set = type_sets[section]
+                if (
+                    (section == "atoms" and int(splitted_line[0]) in ids)
+                    or (
+                        section == "bonds"
+                        and (
+                            int(splitted_line[2]) in ids or int(splitted_line[3]) in ids
+                        )
+                    )
+                    or (
+                        section == "angles"
+                        and (
+                            int(splitted_line[2]) in ids
+                            or int(splitted_line[3]) in ids
+                            or int(splitted_line[4]) in ids
+                        )
+                    )
+                    or (
+                        section == "dihedrals"
+                        and (
+                            int(splitted_line[2]) in ids
+                            or int(splitted_line[3]) in ids
+                            or int(splitted_line[4]) in ids
+                            or int(splitted_line[5]) in ids
+                        )
+                    )
+                    or (
+                        section == "impropers"
+                        and (
+                            int(splitted_line[2]) in ids
+                            or int(splitted_line[3]) in ids
+                            or int(splitted_line[4]) in ids
+                            or int(splitted_line[5]) in ids
+                        )
+                    )
+                ):
+                    counts[section] += 1
+                    type_set.add(int(splitted_line[1 if section != "atoms" else 2]))
+                    content.append(line.rstrip() + "\n")
+
+        # Parse datafile and write directly to output
+        for line in datafile:
+            if "Atoms" in line:
+                current_section = "atoms"
+                tmp_content.append(line.rstrip() + "\n")
+            elif "Bonds" in line:
+                current_section = "bonds"
+                tmp_content.append(line.rstrip() + "\n")
+            elif "Angles" in line:
+                current_section = "angles"
+                tmp_content.append(line.rstrip() + "\n")
+            elif "Dihedrals" in line:
+                current_section = "dihedrals"
+                tmp_content.append(line.rstrip() + "\n")
+            elif "Impropers" in line:
+                current_section = "impropers"
+                tmp_content.append(line.rstrip() + "\n")
+            else:
+                section_handlers[current_section](line)
+
+        # Update header information and write to output
+        for i, line in enumerate(tmp_content):
+            if "atoms" in line:
+                tmp_content[i] = f"     {counts['atoms']}  atoms\n"
+            elif "atom types" in line:
+                tmp_content[i] = f"     {len(type_sets['atoms'])}  atom types\n"
+            elif "bonds" in line:
+                tmp_content[i] = f"     {counts['bonds']}  bonds\n"
+            elif "bond types" in line:
+                tmp_content[i] = f"     {len(type_sets['bonds'])}  bond types\n"
+            elif "angles" in line:
+                tmp_content[i] = f"     {counts['angles']}  angles\n"
+            elif "angle types" in line:
+                tmp_content[i] = f"     {len(type_sets['angles'])}  angle types\n"
+            elif "dihedrals" in line:
+                tmp_content[i] = f"     {counts['dihedrals']}  dihedrals\n"
+            elif "dihedral types" in line:
+                tmp_content[i] = f"     {len(type_sets['dihedrals'])}  dihedral types\n"
+            elif "impropers" in line:
+                tmp_content[i] = f"     {counts['impropers']}  impropers\n"
+            elif "improper types" in line:
+                tmp_content[i] = f"     {len(type_sets['impropers'])}  improper types\n"
+            else:
+                if "Atoms" in line:
                     break
 
-        parsarg = ""
-        line_counter = 0
-        atoms = bonds = angles = dihedrals = impropers = 0
-
-        for line in datafile:
-            if line_counter <= 23:
-                tmp1.write(line)
-                line_counter += 1
-                continue
-            if line == "\n":
-                tmp2.write(line)
-                continue
-            if "Atoms" in line:
-                parsarg = "atoms"
-                tmp2.write(line)
-                continue
-            if "Bonds" in line:
-                parsarg = "bonds"
-                tmp2.write(line)
-                continue
-            if "Angles" in line:
-                parsarg = "angles"
-                tmp2.write(line)
-                continue
-            if "Dihedrals" in line:
-                parsarg = "dihedrals"
-                tmp2.write(line)
-                continue
-            if "Impropers" in line:
-                parsarg = "impropers"
-                tmp2.write(line)
-                continue
-            if parsarg == "atoms":
-                if int(line.split()[0]) in ids:
-                    atoms += 1
-                    tmp2.write(line)
-            if parsarg == "bonds":
-                if int(line.split()[2]) in ids or int(line.split()[3]) in ids:
-                    bonds += 1
-                    tmp2.write(line)
-            if parsarg == "angles":
-                if (
-                    int(line.split()[2]) in ids
-                    or int(line.split()[3]) in ids
-                    or int(line.split()[4]) in ids
-                ):
-                    angles += 1
-                    tmp2.write(line)
-            if parsarg == "dihedrals":
-                if (
-                    int(line.split()[2]) in ids
-                    or int(line.split()[3]) in ids
-                    or int(line.split()[4]) in ids
-                    or int(line.split()[5]) in ids
-                ):
-                    dihedrals += 1
-                    tmp2.write(line)
-            if parsarg == "impropers":
-                if (
-                    int(line.split()[2]) in ids
-                    or int(line.split()[3]) in ids
-                    or int(line.split()[4]) in ids
-                    or int(line.split()[5]) in ids
-                ):
-                    impropers += 1
-                    tmp2.write(line)
-
-        with open(tmp1_path, "r") as tmp1:
-            for line in tmp1:
-                if "atoms" in line:
-                    tmp3.write(f"     {atoms}  atoms\n")
-                elif "bonds" in line:
-                    tmp3.write(f"     {bonds}  bonds\n")
-                elif "angles" in line:
-                    tmp3.write(f"     {angles}  angles\n")
-                elif "dihedrals" in line:
-                    tmp3.write(f"     {dihedrals}  dihedrals\n")
-                elif "impropers" in line:
-                    tmp3.write(f"     {impropers}  impropers\n")
-                else:
-                    tmp3.write(line)
-
-        shutil.copyfileobj(open(tmp3_path, "r"), output)
-        shutil.copyfileobj(open(tmp2_path, "r"), output)
-
-    shutil.rmtree(tmp_dir)
+        output.writelines(tmp_content)
 
 
 def generate_orca_input(input_file, xyz_filename: str):
