@@ -330,6 +330,12 @@ class Configuration:
         self.supercell = []
         self.energy = qm_config.energy
 
+    def calculate_forces(self) -> float:
+        forces_sum = 0
+        for atom in self.atom_data:
+            forces_sum += atom["fx"] ** 2 + atom["fy"] ** 2 + atom["fz"] ** 2
+        return forces_sum
+
     def __sub__(self, other: "Configuration") -> "Configuration":
         """
         Subtracts the fields fx, fy, fz, Energy, and PlusStress from another Configuration object.
