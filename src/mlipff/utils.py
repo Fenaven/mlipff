@@ -277,7 +277,6 @@ def modify_lammps_data(data_file: str, xyz_file: str) -> None:
     for i, line in enumerate(data_lines):
         if "Atoms" in line:
             in_atoms_section = True
-            continue
         if in_atoms_section:
             # Modify lines in the "Atoms" section
             parts = line.split()
