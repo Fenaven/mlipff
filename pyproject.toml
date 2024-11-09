@@ -1,6 +1,6 @@
 [project]
 name = "mlipff"
-version = "0.1.0"
+version = "0.1.2"
 description = "MLIP-FF project"
 authors = [
     {name = "IlyaRaven", email = "feniksaven@gmail.com"},
@@ -8,7 +8,7 @@ authors = [
 dependencies = [
     "ocellar @ git+https://github.com/lsvvt/ocellar.git",
 ]
-requires-python = "==3.10.7"
+requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
