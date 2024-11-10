@@ -37,9 +37,10 @@ def convert(
         config.write_cfg(output_file)
     else:
         print(f"Unsupported output format: {to_format}")
+        return
 
 
-def cut_data(data_file: str, dump_file: str, output_file: str) -> None:
+def cut_data(input_file: str, dump_file: str, output_file: str) -> None:
     """
     Cut data from the data file based on atom IDs present in the dump file and write to the output file.
 
@@ -49,7 +50,7 @@ def cut_data(data_file: str, dump_file: str, output_file: str) -> None:
     output_file (str): Path to the output file.
     """
     with (
-        open(data_file, "r", encoding="utf-8") as datafile,
+        open(input_file, "r", encoding="utf-8") as datafile,
         open(dump_file, "r", encoding="utf-8") as dumpfile,
         open(output_file, "w", encoding="utf-8", newline="\n") as output,
     ):

@@ -20,26 +20,26 @@ def get_parser():
         dest="from_format",
         choices=["dump", "orca", "orcadump"],
         required=True,
-        help="Input format.",
+        help="Input format",
     )
     convert_parser.add_argument(
         "--to",
         dest="to_format",
         choices=["cfg"],
         required=True,
-        help="Output format.",
+        help="Output format",
     )
     convert_parser.add_argument(
         "--input",
         dest="input_file",
         required=True,
-        help="Input file path.",
+        help="Input file path",
     )
     convert_parser.add_argument(
         "--output",
         dest="output_file",
         required=True,
-        help="Output file path.",
+        help="Output file path",
     )
 
     convert_parser.add_argument(
@@ -54,10 +54,10 @@ def get_parser():
         help="Cut data from system.data using nbh.dump",
     )
     cut_data_parser.add_argument(
-        "--data",
-        dest="data_file",
+        "--input",
+        dest="input_file",
         required=True,
-        help="System data file path.",
+        help="Input data file path.",
     )
     cut_data_parser.add_argument(
         "--nbh",
