@@ -43,7 +43,7 @@ while True:
     # Run LAMMPS using sbatch
     is_lammps_finished = False
     run_command(
-        f"sbatch -J lammps -o lammps.out -e lammps.err -N 1 -n {n_cores} -p high,MMM ./run_lammps.sh"
+        f"sbatch -J lammps -o lammps.out -e lammps.err -N 1 -n {n_cores} ./run_lammps.sh"
     )
 
     # Poll until LAMMPS is finished
@@ -91,7 +91,7 @@ while True:
         n_orca = sum(1 for line in Path("nbh.cfg").open() if "BEGIN" in line)
         n_orca_prev = n_orca - 1
 
-        # Organize VASP directories and files
+        # Organize Orca directories and files
         for i in range(n_orca):
             orca_dir = Path(f"ORCA/{i}")
             orca_dir.mkdir(
@@ -99,7 +99,7 @@ while True:
             )  # Create directory if it doesn't exist
             run_command(f"cp ORCA_input_{i}.inp ORCA/{i}/")
             run_command(f"cp ORCA_input_{i}.xyz ORCA/{i}/")
-            # Copy necessary files into each VASP directory
+            # Copy necessary files into each Orca directory
 
         # Submit QM jobs for each configuration
         for i in range(n_orca):
@@ -126,9 +126,9 @@ while True:
         # Process Orca log files to generate calculated.cfg
         for i in range(n_orca):
             run_command(
-                f"./mlipff convert ORCA/{i}/OUTCAR VASP/{i}/calculated.cfg --input_format=outcar"
+                f"./mlipff convert --input=ORCA/{i}/out.log --output=ORCA/{i}/calculated.cfg --from=orcadump --to=cfg"
             )
-            with Path(f"VASP/{i}/calculated.cfg").open("r") as cfg_file:
+            with Path(f"ORCA/{i}/calculated.cfg").open("r") as cfg_file:
                 with Path("train.cfg").open("a") as train_file:
                     train_file.write(
                         cfg_file.read()
@@ -149,6 +149,6 @@ while True:
 
         # Cleanup unnecessary files after training
         time.sleep(5)
-        batch_remove(["nbh.cfg", "*.txt", "POSCAR*"])
+        batch_remove(["nbh.cfg", "*.txt"])
     else:
         break
