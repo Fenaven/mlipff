@@ -1,5 +1,6 @@
 import argparse
 
+
 def add_convert_subparser(subparsers):
     """Add the 'convert' subparser."""
     convert_parser = subparsers.add_parser(
@@ -38,6 +39,7 @@ def add_convert_subparser(subparsers):
         help="File for type replacement",
     )
 
+
 def add_cut_data_subparser(subparsers):
     """Add the 'cut_data' subparser."""
     cut_data_parser = subparsers.add_parser(
@@ -63,6 +65,7 @@ def add_cut_data_subparser(subparsers):
         help="Output data file path.",
     )
 
+
 def add_cut_ff_subparser(subparsers):
     """Add the 'cut_ff' subparser."""
     cut_ff_parser = subparsers.add_parser(
@@ -87,6 +90,7 @@ def add_cut_ff_subparser(subparsers):
         default="metal",
         help="Units to use in output.",
     )
+
 
 def add_create_input_subparser(subparsers):
     """Add the 'create_input' subparser."""
@@ -116,6 +120,7 @@ def add_create_input_subparser(subparsers):
         required=True,
         help="XYZ file path.",
     )
+
 
 def add_cut_nbh_subparser(subparsers):
     """Add the 'cut_nbh' subparser."""
@@ -164,6 +169,7 @@ def add_cut_nbh_subparser(subparsers):
         help="Save extracted neighborhood in PDB format.",
     )
 
+
 def get_parser():
     """Create and return the argument parser with subcommands."""
     parser = argparse.ArgumentParser(
@@ -177,13 +183,14 @@ def get_parser():
         add_cut_data_subparser,
         add_cut_ff_subparser,
         add_create_input_subparser,
-        add_cut_nbh_subparser
+        add_cut_nbh_subparser,
     ]
-    
+
     for func in subcommand_functions:
         func(subparsers)
 
     return parser
+
 
 def parse_arguments():
     """Parse command-line arguments and return the parsed object."""

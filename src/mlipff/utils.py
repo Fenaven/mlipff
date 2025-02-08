@@ -1,5 +1,4 @@
 import os
-import shutil
 from typing import Set
 from mlipff_configuration import Configuration
 from ocellar import molecule
@@ -354,8 +353,13 @@ def cut_ff(
 
 
 def cut_nbh(
-    input_name: str, out_base: str, atom_coords: list[float], radius: float, cut: bool,
-    save_xyz: bool = False, save_pdb: bool = False
+    input_name: str,
+    out_base: str,
+    atom_coords: list[float],
+    radius: float,
+    cut: bool,
+    save_xyz: bool = False,
+    save_pdb: bool = False,
 ) -> None:
     """
     Cut neighborhood atoms from a molecular structure file.
@@ -371,7 +375,9 @@ def cut_nbh(
     """
 
     if len(atom_coords) != 3:
-        raise ValueError("atom_coords must be a list of exactly three float values [x, y, z].")
+        raise ValueError(
+            "atom_coords must be a list of exactly three float values [x, y, z]."
+        )
 
     out_base = os.path.splitext(out_base)[0]  # Remove extension if any
     input_ext = os.path.splitext(input_name)[1].lower()  # Get file extension
@@ -381,16 +387,12 @@ def cut_nbh(
     mol.input_geometry = input_name
 
     # Determine the correct backend based on input file type
-    backend_mapping = {
-        ".xyz": "cclib", 
-        ".dump": "MDAnalysis", 
-        ".cfg": "internal"
-    }
-    
+    backend_mapping = {".xyz": "cclib", ".dump": "MDAnalysis", ".cfg": "internal"}
+
     backend = backend_mapping.get(input_ext)
     if backend is None and input_ext not in backend_mapping:
         raise ValueError(f"Unsupported input file format: {input_ext}")
-    
+
     mol.build_geometry(backend=backend)
 
     # Process molecule
@@ -404,21 +406,20 @@ def cut_nbh(
     save_methods = {
         ".xyz": lambda: new_mol.save_xyz(out_base + ".xyz"),
         ".dump": lambda: mol.save_dump(out_base + ".dump", mol.input_geometry, idxs),
-        ".cfg": lambda: mol.save_cfg(out_base + ".cfg", mol.input_geometry, idxs)
+        ".cfg": lambda: mol.save_cfg(out_base + ".cfg", mol.input_geometry, idxs),
     }
-    
+
     if input_ext in save_methods:
         save_methods[input_ext]()
-    
+
     if save_xyz and not input_ext == ".xyz":
         new_mol.save_xyz(out_base + ".xyz")
     if save_pdb:
         new_mol.save_pdb(out_base + ".pdb")
-        
+
     if input_ext == ".cfg":
         os.remove(out_base + ".cfg_types")
         with open(out_base + ".cfg", "a") as f:
             f.write("END_CFG\n")
-        
-    
+
     print(f"Processed {input_name} and saved results to {out_base}.")
