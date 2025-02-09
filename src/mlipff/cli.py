@@ -125,13 +125,14 @@ def add_create_input_subparser(subparsers):
 def add_cut_nbh_subparser(subparsers):
     """Add the 'cut_nbh' subparser."""
     cut_nbh_parser = subparsers.add_parser(
-        "cut_nbh", help="Cut molecule using a sphere selection"
+        "cut_nbh",
+        help="Cut molecule using a sphere selection. Cutting from cfg requires having *.cfg_types file",
     )
     cut_nbh_parser.add_argument(
         "--input",
         dest="input_file",
         required=True,
-        help="Input dump file path.",
+        help="Input file path, including extension.",
     )
     cut_nbh_parser.add_argument(
         "--output",
@@ -170,6 +171,26 @@ def add_cut_nbh_subparser(subparsers):
     )
 
 
+def add_cut_dump_subparser(subparsers):
+    """Add the 'cut_dump' subparser."""
+    split_dump_parser = subparsers.add_parser(
+        "cut_dump",
+        help="Cut a dump file into separate files, one per timestep.",
+    )
+    split_dump_parser.add_argument(
+        "--input",
+        dest="input_file",
+        required=True,
+        help="Path to the input dump file.",
+    )
+    split_dump_parser.add_argument(
+        "--output_prefix",
+        dest="output_prefix",
+        default="frame_",
+        help="Prefix for the output files (default: 'frame_').",
+    )
+
+
 def get_parser():
     """Create and return the argument parser with subcommands."""
     parser = argparse.ArgumentParser(
@@ -184,6 +205,7 @@ def get_parser():
         add_cut_ff_subparser,
         add_create_input_subparser,
         add_cut_nbh_subparser,
+        add_cut_dump_subparser,
     ]
 
     for func in subcommand_functions:

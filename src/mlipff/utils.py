@@ -423,3 +423,49 @@ def cut_nbh(
             f.write("END_CFG\n")
 
     print(f"Processed {input_name} and saved results to {out_base}.")
+
+
+def cut_random_nbhs(
+    input_name: str,
+    out_base: str,
+    atom_coords: list[float],
+    radius: float,
+    cut: bool,
+    save_xyz: bool = False,
+    save_pdb: bool = False,
+) -> None:
+    pass
+
+
+def cut_dump(input_file: str, output_prefix: str = "frame_") -> None:
+    """
+    Splits a LAMMPS dump file into separate files, each containing a single timestep.
+
+    Parameters:
+        input_file (str): Path to the input dump file.
+        output_prefix (str): Prefix for output files (default: "frame_").
+    """
+    frame = 0
+    outfile = None
+
+    with open(input_file, "r", encoding="utf-8") as dump:
+        for line in dump:
+            if "ITEM: TIMESTEP" in line:
+                # Close the previous file if it was open
+                if outfile:
+                    outfile.close()
+
+                # Create a new file for the current frame
+                frame += 1
+                output_filename = f"{output_prefix}{frame:04d}.dump"
+                outfile = open(output_filename, "w", encoding="utf-8")
+
+            # Write the current line to the corresponding file
+            if outfile:
+                outfile.write(line)
+
+    # Close the last open file
+    if outfile:
+        outfile.close()
+
+    print(f"Splitting completed: {frame} files created.")
