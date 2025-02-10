@@ -13,7 +13,7 @@ class Configuration:
     atom_data : list of dict
         The list of atom data with properties id, type, x, y, z, fx, fy, fz.
     supercell : list of float, optional
-        The supercell matrix describing the configuration.
+        The simulation box bounds stored as [xmin, xmax, ymin, ymax, zmin, zmax].
     energy : float, optional
         The energy of the configuration.
     plus_stress : dict, optional
@@ -41,7 +41,7 @@ class Configuration:
         atom_data : Optional[List[Dict[str, Union[int, float]]]]
             The list of atom data.
         supercell : Optional[List[float]]
-            The supercell matrix.
+            The supercell bounds stored as [xmin, xmax, ymin, ymax, zmin, zmax].
         energy : Optional[float]
             The energy of the configuration.
         plus_stress : Optional[Dict[str, float]]
@@ -51,12 +51,70 @@ class Configuration:
         """
         self.size = size
         self.atom_data = atom_data
-        self.supercell = supercell or []
+        self.supercell = supercell if supercell is not None else []
         self.energy = energy or 0
         self.plus_stress = plus_stress or {}
         self.features = features or {}
 
     def read_cfg(self, file_path: str) -> None:
+        """
+        Reads a single configuration from a .cfg file.
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the .cfg file to read from.
+        """
+        self.atom_data = []
+        self.supercell = []
+        self.energy = None
+        self.plus_stress = {}
+        self.features = {}
+
+        with open(file_path, "r") as file:
+            lines = [
+                line.strip() for line in file
+            ]  # Read all lines and strip whitespace
+
+        for i, line in enumerate(lines):
+            if line == "Size":
+                self.size = int(lines[i + 1])
+
+            elif line == "Supercell":
+                self.supercell = [0, 0, 0, 0, 0, 0]
+                for axis in range(3):
+                    values = list(map(float, lines[axis + 1]))
+                    self.supercell[axis * 2 + 1] = values[
+                        axis
+                    ]  # Store xmax, ymax, zmax
+
+            elif line.startswith("AtomData:"):
+                atom_headers = line.split()[1:]
+                self.atom_data = []
+                for j in range(self.size):
+                    values = lines[i + 1 + j].split()  # Read next self.size lines
+                    atom = {
+                        key: int(val) if key in ["id", "type"] else float(val)
+                        for key, val in zip(atom_headers, values)
+                    }
+                    self.atom_data.append(atom)
+
+                i += self.size
+
+            elif line == "Energy":
+                self.energy = float(lines[i + 1])
+
+            elif line.startswith("PlusStress"):
+                stress_headers = line.split()[1:]
+                stress_values = map(float, lines[i + 1].split())
+                self.plus_stress = dict(zip(stress_headers, stress_values))
+
+            elif line.startswith("Feature"):
+                feature_parts = line.split(maxsplit=2)
+                if len(feature_parts) == 3:
+                    self.features[feature_parts[1]] = feature_parts[2]
+
+    def old_read_cfg(self, file_path: str) -> None:
         """
         Reads a single configuration from a .cfg file.
 
@@ -80,15 +138,11 @@ class Configuration:
                     self.size = int(next(file).strip())
                     continue
                 elif "Supercell" in line:
-                    self.supercell = []
-                    for _ in range(3):
+                    self.supercell = [0, 0, 0, 0, 0, 0]  # Initialize
+                    for i, axis in enumerate(["x", "y", "z"]):
                         line = next(file).strip()
-                        if "AtomData:" in line:
-                            reading_atoms = True
-                            atom_headers = line.split()[1:]
-                            break
-                        else:
-                            self.supercell.extend(map(float, line.split()))
+                        values = list(map(float, line.split()))
+                        self.supercell[i * 2 + 1] = values[i]  # Store xmax, ymax, zmax
                     continue
                 elif "AtomData:" in line:
                     reading_atoms = True
@@ -137,8 +191,9 @@ class Configuration:
             file.write(f"Size\n{self.size}\n")
             if self.supercell:
                 file.write("Supercell\n")
-                for i in range(0, len(self.supercell), 3):
-                    file.write(f"{' '.join(map(str, self.supercell[i:i+3]))}\n")
+                file.write(f"{self.supercell[1] - self.supercell[0]} 0 0\n")
+                file.write(f"0 {self.supercell[3] - self.supercell[2]} 0\n")
+                file.write(f"0 0 {self.supercell[5] - self.supercell[4]}\n")
             if self.atom_data:
                 headers = " ".join(self.atom_data[0].keys())
                 file.write(f"AtomData: {headers}\n")
@@ -183,44 +238,32 @@ class Configuration:
         with open(file_path, "r") as lmp_dump:
             lines = lmp_dump.readlines()
 
-        lattice = [0.0, 0.0, 0.0]
         data = []
         in_atoms_section = False
-        in_box_section = False
 
-        for line in lines:
+        for i, line in enumerate(lines):
             if "ITEM: NUMBER" in line:
-                self.size = int(lines[lines.index(line) + 1].strip())
+                self.size = int(lines[i + 1].strip())
+
             elif "ITEM: BOX" in line:
-                in_box_section = True
-            elif in_box_section:
-                lattice[lines.index(line) % 3] = float(line.split()[1])
-                if lines.index(line) % 3 == 2:
-                    in_box_section = False
-                    self.supercell = [
-                        lattice[0],
-                        0,
-                        0,
-                        0,
-                        lattice[1],
-                        0,
-                        0,
-                        0,
-                        lattice[2],
-                    ]
+                x_min, x_max = map(float, lines[i + 1].split())
+                y_min, y_max = map(float, lines[i + 2].split())
+                z_min, z_max = map(float, lines[i + 3].split())
+                self.supercell = [x_min, x_max, y_min, y_max, z_min, z_max]
+
             elif "ITEM: ATOMS" in line:
                 in_atoms_section = True
-                coordinates_start_index = line.split().index("x") - 2
-                if "fx" in line:
-                    include_efs = True
-                    forces_start_index = line.split().index("fx") - 2
-                else:
-                    include_efs = False
+                headers = line.split()[2:]
+                coordinates_start_index = headers.index("x")
+                forces_start_index = headers.index("fx") if "fx" in headers else None
+
             elif in_atoms_section:
                 atoms_data = list(map(float, line.split()))
                 atom_type = int(atoms_data[1] - 1)
+
                 if atom_type in type_replacement_dict:
                     atom_type = int(type_replacement_dict[atom_type + 1] - 1)
+
                 pos_x, pos_y, pos_z = atoms_data[
                     coordinates_start_index : coordinates_start_index + 3
                 ]
@@ -229,9 +272,8 @@ class Configuration:
                     if include_efs
                     else (0, 0, 0)
                 )
-                self.energy += (
-                    atoms_data[forces_start_index + 3] if include_efs else None
-                )
+
+                self.energy += atoms_data[forces_start_index + 3] if include_efs else 0
                 atom = {
                     "id": len(data) + 1,
                     "type": atom_type,

@@ -191,6 +191,40 @@ def add_cut_dump_subparser(subparsers):
     )
 
 
+def add_cut_random_nbh_subparser(subparsers):
+    """Add the 'cut_random_nbh' subparser."""
+    cut_random_nbh_parser = subparsers.add_parser(
+        "cut_random_nbh",
+        help="Process MD frames by selecting a random atom and extracting a neighborhood.",
+    )
+    cut_random_nbh_parser.add_argument(
+        "--frames",
+        dest="num_frames",
+        type=int,
+        required=True,
+        help="Number of frames to process.",
+    )
+    cut_random_nbh_parser.add_argument(
+        "--prefix",
+        dest="file_prefix",
+        required=True,
+        help="Prefix for the dump files (e.g., 'dump_').",
+    )
+    cut_random_nbh_parser.add_argument(
+        "--radius",
+        dest="radius",
+        type=float,
+        required=True,
+        help="Radius for the neighborhood selection.",
+    )
+    cut_random_nbh_parser.add_argument(
+        "--cut",
+        dest="cut",
+        action="store_true",
+        help="Enable molecule cutting in the extracted neighborhood.",
+    )
+
+
 def get_parser():
     """Create and return the argument parser with subcommands."""
     parser = argparse.ArgumentParser(
@@ -206,6 +240,7 @@ def get_parser():
         add_create_input_subparser,
         add_cut_nbh_subparser,
         add_cut_dump_subparser,
+        add_cut_random_nbh_subparser,
     ]
 
     for func in subcommand_functions:

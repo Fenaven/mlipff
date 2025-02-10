@@ -7,6 +7,7 @@ from utils import (
     modify_lammps_data,
     cut_dump,
 )
+from frames_processing import process_multiple_frames
 from cli import parse_arguments, get_parser
 
 
@@ -50,6 +51,10 @@ def handle_cut_dump(args):
     cut_dump(args.input_file, args.output_prefix)
 
 
+def handle_process_frames(args):
+    process_multiple_frames(args.num_frames, args.file_prefix, args.radius, args.cut)
+
+
 # Mapping CLI commands to handler functions
 COMMAND_HANDLERS = {
     "convert": handle_convert,
@@ -58,6 +63,7 @@ COMMAND_HANDLERS = {
     "cut_nbh": handle_cut_nbh,
     "create_input": handle_create_input,
     "cut_dump": handle_cut_dump,
+    "cut_random_nbh": handle_process_frames,
 }
 
 
