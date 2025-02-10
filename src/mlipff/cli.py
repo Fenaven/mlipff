@@ -23,12 +23,14 @@ def add_convert_subparser(subparsers):
     )
     convert_parser.add_argument(
         "--input",
+        "-i",
         dest="input_file",
         required=True,
         help="Input file path",
     )
     convert_parser.add_argument(
         "--output",
+        "-o",
         dest="output_file",
         required=True,
         help="Output file path",
@@ -48,18 +50,21 @@ def add_cut_data_subparser(subparsers):
     )
     cut_data_parser.add_argument(
         "--input",
+        "-i",
         dest="input_file",
         required=True,
         help="Input data file path.",
     )
     cut_data_parser.add_argument(
-        "--nbh",
+        "--dump",
+        "-d",
         dest="dump_file",
         required=True,
         help="Neighbourhood dump file path.",
     )
     cut_data_parser.add_argument(
         "--output",
+        "-o",
         dest="output_file",
         required=True,
         help="Output data file path.",
@@ -74,18 +79,21 @@ def add_cut_ff_subparser(subparsers):
     )
     cut_ff_parser.add_argument(
         "--input",
+        "-i",
         dest="input_file",
         default="system.in.settings",
         help="Input file to read from.",
     )
     cut_ff_parser.add_argument(
         "--style",
+        "-s",
         dest="style",
         default="lj/cut/coul/cut",
         help="Pair style to use in output.",
     )
     cut_ff_parser.add_argument(
         "--units",
+        "-u",
         dest="units",
         default="metal",
         help="Units to use in output.",
@@ -130,18 +138,21 @@ def add_cut_nbh_subparser(subparsers):
     )
     cut_nbh_parser.add_argument(
         "--input",
+        "-i",
         dest="input_file",
         required=True,
         help="Input file path, including extension.",
     )
     cut_nbh_parser.add_argument(
         "--output",
+        "-o",
         dest="output_base",
         required=True,
         help="Output file base name.",
     )
     cut_nbh_parser.add_argument(
         "--coords",
+        "--coordinates",
         dest="atom_coords",
         type=str,
         required=True,
@@ -149,6 +160,7 @@ def add_cut_nbh_subparser(subparsers):
     )
     cut_nbh_parser.add_argument(
         "--radius",
+        "-r",
         dest="radius",
         type=float,
         required=True,
@@ -156,16 +168,19 @@ def add_cut_nbh_subparser(subparsers):
     )
     cut_nbh_parser.add_argument(
         "--cut",
+        dest="cut",
         action="store_true",
         help="If True, then cut molecules and add H to xyz file.",
     )
     cut_nbh_parser.add_argument(
         "--save-xyz",
+        dest="save_xyz",
         action="store_true",
         help="Save extracted neighborhood in XYZ format.",
     )
     cut_nbh_parser.add_argument(
         "--save-pdb",
+        dest="save_pdb",
         action="store_true",
         help="Save extracted neighborhood in PDB format.",
     )
@@ -179,12 +194,14 @@ def add_cut_dump_subparser(subparsers):
     )
     split_dump_parser.add_argument(
         "--input",
+        "-i",
         dest="input_file",
         required=True,
         help="Path to the input dump file.",
     )
     split_dump_parser.add_argument(
         "--output_prefix",
+        "-o",
         dest="output_prefix",
         default="frame_",
         help="Prefix for the output files (default: 'frame_').",
@@ -199,6 +216,7 @@ def add_cut_random_nbh_subparser(subparsers):
     )
     cut_random_nbh_parser.add_argument(
         "--frames",
+        "-f",
         dest="num_frames",
         type=int,
         required=True,
@@ -206,12 +224,14 @@ def add_cut_random_nbh_subparser(subparsers):
     )
     cut_random_nbh_parser.add_argument(
         "--prefix",
+        "-p",
         dest="file_prefix",
         required=True,
         help="Prefix for the dump files (e.g., 'dump_').",
     )
     cut_random_nbh_parser.add_argument(
         "--radius",
+        "-r",
         dest="radius",
         type=float,
         required=True,
@@ -219,6 +239,7 @@ def add_cut_random_nbh_subparser(subparsers):
     )
     cut_random_nbh_parser.add_argument(
         "--cut",
+        "-c",
         dest="cut",
         action="store_true",
         help="Enable molecule cutting in the extracted neighborhood.",

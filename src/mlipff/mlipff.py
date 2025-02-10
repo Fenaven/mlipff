@@ -37,7 +37,15 @@ def handle_cut_ff(args):
 
 def handle_cut_nbh(args):
     atom_coords = list(map(float, args.atom_coords.split(",")))
-    cut_nbh(args.input_file, args.output_base, atom_coords, args.radius, args.cut)
+    cut_nbh(
+        args.input_file,
+        args.output_base,
+        atom_coords,
+        args.radius,
+        args.cut,
+        args.save_xyz,
+        args.save_pdb,
+    )
 
 
 def handle_create_input(args):

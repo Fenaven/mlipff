@@ -412,7 +412,10 @@ def cut_nbh(
     if input_ext in save_methods:
         save_methods[input_ext]()
 
+    print(save_xyz)
+
     if save_xyz and not input_ext == ".xyz":
+        print("uvaga")
         new_mol.save_xyz(out_base + ".xyz")
     if save_pdb:
         new_mol.save_pdb(out_base + ".pdb")
