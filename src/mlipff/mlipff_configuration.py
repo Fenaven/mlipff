@@ -56,7 +56,7 @@ class Configuration:
         self.plus_stress = plus_stress or {}
         self.features = features or {}
 
-    def read_cfg(self, file_path: str) -> None:
+    def read_cfg(self, file_path: str, store_grade: Optional[int]) -> None:
         """
         Reads a single configuration from a .cfg file.
 

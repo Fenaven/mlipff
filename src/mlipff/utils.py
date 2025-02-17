@@ -472,3 +472,50 @@ def cut_dump(input_file: str, output_prefix: str = "frame_") -> None:
         outfile.close()
 
     print(f"Splitting completed: {frame} files created.")
+
+
+def filter_by_grade(input_file: str, output_file: str, threshold: float) -> None:
+    """
+    Filter configurations based on a minimum grade threshold and save them to the output file.
+
+    Parameters:
+    input_file (str): Path to the input file.
+    output_file (str): Path to the output file where filtered results will be stored.
+    n (float): Minimum grade threshold; only configurations with a grade > n will be included.
+    """
+    with open(input_file, "r", encoding="utf-8") as infile, open(
+        output_file, "w", encoding="utf-8", newline="\n"
+    ) as outfile:
+        inside_cfg = False
+        current_cfg = []
+        current_grade = None
+
+        for line in infile:
+            line = line.strip()
+
+            if line == "BEGIN_CFG":
+                inside_cfg = True
+                current_cfg = [line]
+                current_grade = None
+            elif line == "END_CFG":
+                if (
+                    inside_cfg
+                    and current_grade is not None
+                    and current_grade >= threshold
+                ):
+                    current_cfg.append(line)
+                    outfile.write("\n".join(current_cfg) + "\n\n")
+                inside_cfg = False
+                current_cfg = []  # Reset buffer
+            elif inside_cfg:
+                if line.startswith("Feature   MV_grade"):
+                    current_grade = float(line.split()[-1])
+                    if current_grade < threshold:
+                        inside_cfg = False  # Discard cfg
+                        current_cfg = []  # Clear buffer
+                        continue
+                current_cfg.append(line)
+
+    print(
+        f"Configurations with grade greater than {threshold} have been extracted to {output_file}."
+    )

@@ -6,6 +6,7 @@ from utils import (
     generate_orca_input,
     modify_lammps_data,
     cut_dump,
+    filter_by_grade,
 )
 from frames_processing import process_multiple_frames
 from cli import parse_arguments, get_parser
@@ -63,6 +64,10 @@ def handle_process_frames(args):
     process_multiple_frames(args.num_frames, args.file_prefix, args.radius, args.cut)
 
 
+def handle_filter_by_grade(args):
+    filter_by_grade(args.input_file, args.output_file, args.threshold)
+
+
 # Mapping CLI commands to handler functions
 COMMAND_HANDLERS = {
     "convert": handle_convert,
@@ -72,6 +77,7 @@ COMMAND_HANDLERS = {
     "create_input": handle_create_input,
     "cut_dump": handle_cut_dump,
     "cut_random_nbh": handle_process_frames,
+    "filter_by_grade": handle_filter_by_grade,
 }
 
 

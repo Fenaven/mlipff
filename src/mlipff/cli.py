@@ -246,6 +246,36 @@ def add_cut_random_nbh_subparser(subparsers):
     )
 
 
+def add_filter_by_grade_subparser(subparsers):
+    """Add the 'filter_by_grade' subparser."""
+    filter_parser = subparsers.add_parser(
+        "filter_by_grade",
+        help="Filter configurations based on a minimum grade threshold.",
+    )
+    filter_parser.add_argument(
+        "--input",
+        "-i",
+        dest="input_file",
+        required=True,
+        help="Input file path.",
+    )
+    filter_parser.add_argument(
+        "--output",
+        "-o",
+        dest="output_file",
+        required=True,
+        help="Output file path.",
+    )
+    filter_parser.add_argument(
+        "--threshold",
+        "-t",
+        dest="threshold",
+        type=float,
+        required=True,
+        help="Minimum grade threshold.",
+    )
+
+
 def get_parser():
     """Create and return the argument parser with subcommands."""
     parser = argparse.ArgumentParser(
@@ -262,6 +292,7 @@ def get_parser():
         add_cut_nbh_subparser,
         add_cut_dump_subparser,
         add_cut_random_nbh_subparser,
+        add_filter_by_grade_subparser,
     ]
 
     for func in subcommand_functions:
