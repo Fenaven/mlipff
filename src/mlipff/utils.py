@@ -519,3 +519,29 @@ def filter_by_grade(input_file: str, output_file: str, threshold: float) -> None
     print(
         f"Configurations with grade greater than {threshold} have been extracted to {output_file}."
     )
+
+
+def check_cfg_ratio(
+    new_train_file: str, current_train_file: str, fraction: float = 0.5
+) -> bool:
+    """
+    Compare the number of 'BEGIN_CFG' occurrences in two .cfg files and return True if
+    the count in new_train is at least fraction times the count in current_train.
+
+    Parameters:
+    new_train_file (str): Path to the new training .cfg file.
+    current_train_file (str): Path to the current training .cfg file.
+    fraction (float, optional): The fraction threshold (default is 0.5).
+
+    Returns:
+    bool: True if the count of 'BEGIN_CFG' in new_train is >= fraction * count in current_train, otherwise False.
+    """
+
+    def count_begin_cfg(file_path: str) -> int:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return sum(1 for line in f if line.strip() == "BEGIN_CFG")
+
+    new_count = count_begin_cfg(new_train_file)
+    current_count = count_begin_cfg(current_train_file)
+
+    return new_count >= fraction * current_count
