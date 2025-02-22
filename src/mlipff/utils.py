@@ -13,13 +13,14 @@ def convert(
 ) -> None:
     """
     Convert a file from one format to another using the provided configuration.
-
-    Parameters:
-    from_format (str): The input file format.
-    to_format (str): The desired output file format.
-    input_file (str): Path to the input file.
-    output_file (str): Path to the output file.
-    replace_file (str): Path to the replace file for configuration.
+    
+    Parameters
+    ----------
+    :param from_format (str): The input file format.
+    :param to_format (str): The desired output file format.
+    :param input_file (str): Path to the input file.
+    :param output_file (str): Path to the output file.
+    :param replace_file (str): Path to the replace file for configuration.
     """
     config = Configuration()
 
