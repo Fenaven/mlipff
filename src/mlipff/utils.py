@@ -13,14 +13,19 @@ def convert(
 ) -> None:
     """
     Convert a file from one format to another using the provided configuration.
-    
+
     Parameters
     ----------
-    :param from_format (str): The input file format.
-    :param to_format (str): The desired output file format.
-    :param input_file (str): Path to the input file.
-    :param output_file (str): Path to the output file.
-    :param replace_file (str): Path to the replace file for configuration.
+    from_format : str
+        The input file format.
+    to_format : str
+        The desired output file format.
+    input_file : str
+        Path to the input file.
+    output_file : str
+        Path to the output file.
+    replace_file : str
+        Path to the replace file for configuration.
     """
     config = Configuration()
 
@@ -45,10 +50,14 @@ def cut_data(input_file: str, dump_file: str, output_file: str) -> None:
     """
     Cut data from the data file based on atom IDs present in the dump file and write to the output file.
 
-    Parameters:
-    data_file (str): Path to the data file.
-    dump_file (str): Path to the dump file.
-    output_file (str): Path to the output file.
+    Parameters
+    ----------
+    data_file : str
+        Path to the data file.
+    dump_file : str
+        Path to the dump file.
+    output_file : str
+        Path to the output file.
     """
     with (
         open(input_file, "r", encoding="utf-8") as datafile,
@@ -108,11 +117,16 @@ def cut_data(input_file: str, dump_file: str, output_file: str) -> None:
             """
             Handle the parsing of a section in the data file and update the content accordingly.
 
-            Parameters:
-            line (str): The current line being processed.
-            ids (Set[int]): The set of atom IDs.
-            content (list): The list to store content for the output file.
-            section (str): The current section being processed.
+            Parameters
+            ----------
+            line : str
+                The current line being processed.
+            ids : Set[int]
+                The set of atom IDs.
+            content : list
+                The list to store content for the output file.
+            section : str
+                The current section being processed.
             """
             if line.strip() == "":
                 content.append(line.rstrip() + "\n")
@@ -211,9 +225,12 @@ def generate_orca_input(input_file: str, xyz_filename: str) -> None:
     """
     Generate an ORCA input file using the specified input and .xyz file.
 
-    Parameters:
-    input_file (str): Path to the input file.
-    xyz_filename (str): Path to the .xyz file.
+    Parameters
+    ----------
+    input_file : str
+        Path to the input file.
+    xyz_filename : str
+        Path to the .xyz file.
     """
     # Check if the file exists and has the correct extension
     if not os.path.isfile(xyz_filename):
@@ -255,9 +272,12 @@ def modify_lammps_data(data_file: str, xyz_file: str) -> None:
     """
     Modify the LAMMPS data file based on coordinates from the .xyz file.
 
-    Parameters:
-    data_file (str): Path to the LAMMPS data file.
-    xyz_file (str): Path to the .xyz file.
+    Parameters
+    ----------
+    data_file : str
+        Path to the LAMMPS data file.
+    xyz_file : str
+        Path to the .xyz file.
     """
     # Read the xyz file
     with open(xyz_file, "r") as f:
@@ -303,10 +323,14 @@ def cut_ff(
     """
     Cut force field data from the input file and save it into separate coefficient files.
 
-    Parameters:
-    input_filename (str): Path to the input force field file.
-    style (str): Style for pair coefficients.
-    units (str): Units used in the force field file.
+    Parameters
+    ----------
+    input_filename : str
+        Path to the input force field file.
+    style : str
+        Style for pair coefficients.
+    units : str
+        Units used in the force field file.
     """
     if units == "real":
         scaling_factor = 1
@@ -365,14 +389,22 @@ def cut_nbh(
     """
     Cut neighborhood atoms from a molecular structure file.
 
-    Parameters:
-    input_name (str): Path to the input file.
-    out_base (str): Base name for the output files.
-    atom_coords (list[float]): List of three floats representing (x, y, z) coordinates.
-    radius (float): Radius for selecting atoms.
-    cut (bool): Whether to cut the molecule.
-    save_xyz (bool): Whether to save .xyz output.
-    save_pdb (bool): Whether to save .pdb output.
+    Parameters
+    ----------
+    input_name : str
+        Path to the input file.
+    out_base : str
+        Base name for the output files.
+    atom_coords : list of float
+        List of three floats representing (x, y, z) coordinates.
+    radius : float
+        Radius for selecting atoms.
+    cut : bool
+        Whether to cut the molecule.
+    save_xyz : bool
+        Whether to save .xyz output.
+    save_pdb : bool
+        Whether to save .pdb output.
     """
 
     if len(atom_coords) != 3:
@@ -445,9 +477,12 @@ def cut_dump(input_file: str, output_prefix: str = "frame_") -> None:
     """
     Splits a LAMMPS dump file into separate files, each containing a single timestep.
 
-    Parameters:
-        input_file (str): Path to the input dump file.
-        output_prefix (str): Prefix for output files (default: "frame_").
+    Parameters
+    ----------
+    input_file : str
+        Path to the input dump file.
+    output_prefix : str, default="frame\_"
+        Prefix for output files.
     """
     frame = 0
     outfile = None
@@ -475,14 +510,18 @@ def cut_dump(input_file: str, output_prefix: str = "frame_") -> None:
     print(f"Splitting completed: {frame} files created.")
 
 
-def filter_by_grade(input_file: str, output_file: str, threshold: float) -> None:
+def filter_by_grade(input_file: str, output_file: str, threshold: float = 2.0) -> None:
     """
     Filter configurations based on a minimum grade threshold and save them to the output file.
 
-    Parameters:
-    input_file (str): Path to the input file.
-    output_file (str): Path to the output file where filtered results will be stored.
-    n (float): Minimum grade threshold; only configurations with a grade > n will be included.
+    Parameters
+    ----------
+    input_file : str
+        Path to the input file.
+    output_file : str
+        Path to the output file where filtered results will be stored.
+    n : float, default: 2.0
+        Minimum grade threshold; only configurations with a grade > n will be included.
     """
     with open(input_file, "r", encoding="utf-8") as infile, open(
         output_file, "w", encoding="utf-8", newline="\n"
@@ -529,13 +568,19 @@ def check_cfg_ratio(
     Compare the number of 'BEGIN_CFG' occurrences in two .cfg files and return True if
     the count in new_train is at least fraction times the count in current_train.
 
-    Parameters:
-    new_train_file (str): Path to the new training .cfg file.
-    current_train_file (str): Path to the current training .cfg file.
-    fraction (float, optional): The fraction threshold (default is 0.5).
+    Parameters
+    ----------
+    new_train_file : str
+        Path to the new training .cfg file.
+    current_train_file : str
+        Path to the current training .cfg file.
+    fraction : float, optional, default: 0.5
+        The fraction threshold.
 
-    Returns:
-    bool: True if the count of 'BEGIN_CFG' in new_train is >= fraction * count in current_train, otherwise False.
+    Returns
+    -------
+    bool
+        True if the count of 'BEGIN_CFG' in new_train is >= fraction * count in current_train, otherwise False.
     """
 
     def count_begin_cfg(file_path: str) -> int:
