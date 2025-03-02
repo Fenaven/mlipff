@@ -214,10 +214,10 @@ class Configuration:
     ) -> None:
         """
         Reads a LAMMPS .dump file and populates the configuration attributes.
-        Columns of dump file should be:
-        id type mass x y z fx fy fz c_pe
-        id and type should be always on 1 and 2 place, position of xyz and forces+energy may vary,
-        but the order x y z should be followed, as well as fx fy fz c_pe
+            Columns of dump file should be:
+            id type mass x y z fx fy fz c_pe
+            id and type should be always on 1 and 2 place, position of xyz and forces+energy may vary,
+            but the order x y z should be followed, as well as fx fy fz c_pe
 
         Parameters
         ----------

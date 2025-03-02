@@ -52,171 +52,98 @@ def cut_data(input_file: str, dump_file: str, output_file: str) -> None:
 
     Parameters
     ----------
-    data_file : str
+    input_file : str
         Path to the data file.
     dump_file : str
         Path to the dump file.
     output_file : str
         Path to the output file.
     """
-    with (
-        open(input_file, "r", encoding="utf-8") as datafile,
-        open(dump_file, "r", encoding="utf-8") as dumpfile,
-        open(output_file, "w", encoding="utf-8", newline="\n") as output,
-    ):
-        ids: Set[int] = set()
-        atom_types: Set[int] = set()
-        bond_types: Set[int] = set()
-        angle_types: Set[int] = set()
-        dihedral_types: Set[int] = set()
-        improper_types: Set[int] = set()
 
-        # Parse dumpfile to collect atom IDs
+    def handle_section(
+        line: str, section: str, tmp_content: list, ids: Set[int], atom_coords_map: dict
+    ) -> None:
+        """Handle the parsing of a section in the data file and update the content accordingly."""
+        if (line.strip() == "") or (section == "header"):
+            tmp_content.append(line.rstrip() + "\n")
+            return
+
+        splitted_line = line.split()
+        type_set = type_sets[section]
+
+        if section == "atoms":
+            atom_id = int(splitted_line[0])
+            if atom_id in ids:
+                # Replace coordinates by those from dump
+                splitted_line[-3:] = map(str, atom_coords_map[atom_id])
+                tmp_content.append(" ".join(splitted_line) + "\n")
+                counts[section] += 1
+                type_set.add(int(splitted_line[2]))
+
+        else:
+            line_ids = list(map(int, splitted_line[2:]))
+            if all(atom_id in ids for atom_id in line_ids):
+                counts[section] += 1
+                type_set.add(int(splitted_line[1]))
+                tmp_content.append(line.rstrip() + "\n")
+
+    ids: Set[int] = set()
+    atom_coords_map = dict()
+    type_sets = {
+        t: set() for t in ["atoms", "bonds", "angles", "dihedrals", "impropers"]
+    }
+    counts = {t: 0 for t in type_sets}
+    tmp_content = []
+    current_section = "header"
+
+    # Parse dump to collect info about ids and coordinates
+    with open(dump_file, "r", encoding="utf-8") as dumpfile:
         for line in dumpfile:
             if "ITEM: NUMBER" in line:
                 atom_number = int(next(dumpfile).strip())
             elif "ITEM: ATOMS" in line:
+                coordinates_start_index = line.split()[2:].index("x")
                 for _ in range(atom_number):
-                    ids.add(int(next(dumpfile).split()[0]))
-
-        counts = {
-            "atoms": 0,
-            "bonds": 0,
-            "angles": 0,
-            "dihedrals": 0,
-            "impropers": 0,
-        }
-        type_sets = {
-            "atoms": atom_types,
-            "bonds": bond_types,
-            "angles": angle_types,
-            "dihedrals": dihedral_types,
-            "impropers": improper_types,
-        }
-        tmp_content = []
-
-        # State machine for parsing different sections of the datafile
-        section_handlers = {
-            "header": lambda line: tmp_content.append(line.rstrip() + "\n"),
-            "atoms": lambda line: handle_section(line, ids, tmp_content, "atoms"),
-            "bonds": lambda line: handle_section(line, ids, tmp_content, "bonds"),
-            "angles": lambda line: handle_section(line, ids, tmp_content, "angles"),
-            "dihedrals": lambda line: handle_section(
-                line, ids, tmp_content, "dihedrals"
-            ),
-            "impropers": lambda line: handle_section(
-                line, ids, tmp_content, "impropers"
-            ),
-        }
-
-        current_section = "header"
-
-        def handle_section(
-            line: str, ids: Set[int], content: list, section: str
-        ) -> None:
-            """
-            Handle the parsing of a section in the data file and update the content accordingly.
-
-            Parameters
-            ----------
-            line : str
-                The current line being processed.
-            ids : Set[int]
-                The set of atom IDs.
-            content : list
-                The list to store content for the output file.
-            section : str
-                The current section being processed.
-            """
-            if line.strip() == "":
-                content.append(line.rstrip() + "\n")
-            else:
-                splitted_line = line.split()
-                type_set = type_sets[section]
-                if (
-                    (section == "atoms" and int(splitted_line[0]) in ids)
-                    or (
-                        section == "bonds"
-                        and (
-                            int(splitted_line[2]) in ids or int(splitted_line[3]) in ids
-                        )
+                    splitted_line = next(dumpfile).split()
+                    pos_x, pos_y, pos_z = map(
+                        float,
+                        splitted_line[
+                            coordinates_start_index : coordinates_start_index + 3
+                        ],
                     )
-                    or (
-                        section == "angles"
-                        and (
-                            int(splitted_line[2]) in ids
-                            or int(splitted_line[3]) in ids
-                            or int(splitted_line[4]) in ids
-                        )
-                    )
-                    or (
-                        section == "dihedrals"
-                        and (
-                            int(splitted_line[2]) in ids
-                            or int(splitted_line[3]) in ids
-                            or int(splitted_line[4]) in ids
-                            or int(splitted_line[5]) in ids
-                        )
-                    )
-                    or (
-                        section == "impropers"
-                        and (
-                            int(splitted_line[2]) in ids
-                            or int(splitted_line[3]) in ids
-                            or int(splitted_line[4]) in ids
-                            or int(splitted_line[5]) in ids
-                        )
-                    )
-                ):
-                    counts[section] += 1
-                    type_set.add(int(splitted_line[1 if section != "atoms" else 2]))
-                    content.append(line.rstrip() + "\n")
+                    ids.add(int(splitted_line[0]))
+                    atom_coords_map[int(splitted_line[0])] = (pos_x, pos_y, pos_z)
 
+    with (
+        open(input_file, "r", encoding="utf-8") as datafile,
+        open(output_file, "w", encoding="utf-8", newline="\n") as output,
+    ):
         # Parse datafile and write directly to output
         for line in datafile:
-            if "Atoms" in line:
-                current_section = "atoms"
-                tmp_content.append(line.rstrip() + "\n")
-            elif "Bonds" in line:
-                current_section = "bonds"
-                tmp_content.append(line.rstrip() + "\n")
-            elif "Angles" in line:
-                current_section = "angles"
-                tmp_content.append(line.rstrip() + "\n")
-            elif "Dihedrals" in line:
-                current_section = "dihedrals"
-                tmp_content.append(line.rstrip() + "\n")
-            elif "Impropers" in line:
-                current_section = "impropers"
+            if not line.strip():
+                tmp_content.append("\n")
+                continue
+            first_word = line.split()[0].lower()
+            if first_word in counts:
+                current_section = first_word
                 tmp_content.append(line.rstrip() + "\n")
             else:
-                section_handlers[current_section](line)
+                handle_section(line, current_section, tmp_content, ids, atom_coords_map)
 
         # Update header information and write to output
         for i, line in enumerate(tmp_content):
-            if "atoms" in line:
-                tmp_content[i] = f"     {counts['atoms']}  atoms\n"
-            elif "atom types" in line:
-                tmp_content[i] = f"     {len(type_sets['atoms'])}  atom types\n"
-            elif "bonds" in line:
-                tmp_content[i] = f"     {counts['bonds']}  bonds\n"
-            elif "bond types" in line:
-                tmp_content[i] = f"     {len(type_sets['bonds'])}  bond types\n"
-            elif "angles" in line:
-                tmp_content[i] = f"     {counts['angles']}  angles\n"
-            elif "angle types" in line:
-                tmp_content[i] = f"     {len(type_sets['angles'])}  angle types\n"
-            elif "dihedrals" in line:
-                tmp_content[i] = f"     {counts['dihedrals']}  dihedrals\n"
-            elif "dihedral types" in line:
-                tmp_content[i] = f"     {len(type_sets['dihedrals'])}  dihedral types\n"
-            elif "impropers" in line:
-                tmp_content[i] = f"     {counts['impropers']}  impropers\n"
-            elif "improper types" in line:
-                tmp_content[i] = f"     {len(type_sets['impropers'])}  improper types\n"
-            else:
-                if "Atoms" in line:
+            for name in counts:
+                if name in line:
+                    tmp_content[i] = f"     {counts[name]}  {name}\n"
                     break
+            else:  # if there was no match in counts
+                for name in type_sets:
+                    if f"{name} types" in line:
+                        tmp_content[i] = f"     {len(type_sets[name])}  {name} types\n"
+                        break
+                else:
+                    if "Atoms" in line:
+                        break
 
         output.writelines(tmp_content)
 

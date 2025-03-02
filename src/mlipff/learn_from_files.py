@@ -1,7 +1,7 @@
 import os
 import time
 from pathlib import Path
-from utils import filter_by_grade
+from utils import filter_by_grade, cut_dump
 from frames_processing import process_multiple_frames
 
 
@@ -14,12 +14,17 @@ def train_potential():
         time.sleep(5)
 
 
+def create_mm_input():
+    pass
+
+
 def process_and_train(
     md_folder, num_frames=100, radius=5.0, cutoff=True, grade_threshold=2.0
 ):
     """
     Основной процесс: обработка кадров, обучение, фильтрация, итерации.
     """
+    # os.listdir()
     process_multiple_frames(num_frames, md_folder + "/frame_", radius, cutoff)
 
     with open("train.cfg", "w") as train_file:
