@@ -47,6 +47,7 @@ def convert(
 
 
 def cut_data(input_file: str, dump_file: str, output_file: str) -> None:
+    # ДОБАВИТЬ ВОЗМОЖНОСТЬ ЧИТАТЬ НЕ ИЗ ДАМПА, А ИЗ КФГ
     """
     Cut data from the data file based on atom IDs present in the dump file and write to the output file.
 
@@ -92,7 +93,9 @@ def cut_data(input_file: str, dump_file: str, output_file: str) -> None:
     type_sets = {
         t: set() for t in ["atoms", "bonds", "angles", "dihedrals", "impropers"]
     }
-    counts = {t: 0 for t in type_sets}
+    counts = {
+        t: 0 for t in type_sets
+    }  # dict with keys atoms, bonds, ... for counting ids
     tmp_content = []
     current_section = "header"
 
@@ -148,7 +151,7 @@ def cut_data(input_file: str, dump_file: str, output_file: str) -> None:
         output.writelines(tmp_content)
 
 
-def generate_orca_input(input_file: str, xyz_filename: str) -> None:
+def generate_orca_input(input_file: str, xyz_filename: str, output_file: str) -> None:
     """
     Generate an ORCA input file using the specified input and .xyz file.
 
@@ -158,6 +161,8 @@ def generate_orca_input(input_file: str, xyz_filename: str) -> None:
         Path to the input file.
     xyz_filename : str
         Path to the .xyz file.
+    output_file : str
+        Path to the output file.
     """
     # Check if the file exists and has the correct extension
     if not os.path.isfile(xyz_filename):
@@ -189,9 +194,8 @@ def generate_orca_input(input_file: str, xyz_filename: str) -> None:
     if not success:
         print("Error: Please provide a valid input file containing *xyzfile signature")
         return
-    out_filename = xyz_filename.replace(".xyz", ".inp")
     # Write the modified lines to a new output file
-    with open(out_filename, "w") as file:
+    with open(output_file, "w") as file:
         file.writelines(lines)
 
 
@@ -372,18 +376,10 @@ def cut_nbh(
     if input_ext in save_methods:
         save_methods[input_ext]()
 
-    print(save_xyz)
-
     if save_xyz and not input_ext == ".xyz":
-        print("uvaga")
         new_mol.save_xyz(out_base + ".xyz")
     if save_pdb:
         new_mol.save_pdb(out_base + ".pdb")
-
-    if input_ext == ".cfg":
-        os.remove(out_base + ".cfg_types")
-        with open(out_base + ".cfg", "a") as f:
-            f.write("END_CFG\n")
 
     print(f"Processed {input_name} and saved results to {out_base}.")
 
@@ -400,7 +396,9 @@ def cut_random_nbhs(
     pass
 
 
-def cut_dump(input_file: str, output_prefix: str = "frame_") -> None:
+def cut_dump(
+    input_file: str, output_prefix: str = "frame_", starting_id: int = 0
+) -> int:
     """
     Splits a LAMMPS dump file into separate files, each containing a single timestep.
 
@@ -410,31 +408,42 @@ def cut_dump(input_file: str, output_prefix: str = "frame_") -> None:
         Path to the input dump file.
     output_prefix : str, default="frame\_"
         Prefix for output files.
+
+    Returns
+    -------
+    int
+        Last frame id.
     """
-    frame = 0
+    frame = starting_id
     outfile = None
 
     with open(input_file, "r", encoding="utf-8") as dump:
-        for line in dump:
-            if "ITEM: TIMESTEP" in line:
-                # Close the previous file if it was open
-                if outfile:
-                    outfile.close()
+        lines = dump.readlines()
 
-                # Create a new file for the current frame
-                frame += 1
-                output_filename = f"{output_prefix}{frame:04d}.dump"
-                outfile = open(output_filename, "w", encoding="utf-8")
+    num_atoms = int(lines[3])
 
-            # Write the current line to the corresponding file
+    for line in lines:
+        if "ITEM: TIMESTEP" in line:
+            # Close the previous file if it was open
             if outfile:
-                outfile.write(line)
+                outfile.close()
+
+            # Create a new file for the current frame
+            output_filename = f"{output_prefix}{frame:04d}.dump"
+            outfile = open(output_filename, "w", encoding="utf-8")
+            frame += 1
+
+        # Write the current line to the corresponding file
+        if outfile:
+            outfile.write(line)
 
     # Close the last open file
     if outfile:
         outfile.close()
 
     print(f"Splitting completed: {frame} files created.")
+
+    return frame - 1
 
 
 def filter_by_grade(input_file: str, output_file: str, threshold: float = 2.0) -> None:
@@ -448,7 +457,7 @@ def filter_by_grade(input_file: str, output_file: str, threshold: float = 2.0) -
     output_file : str
         Path to the output file where filtered results will be stored.
     n : float, default: 2.0
-        Minimum grade threshold; only configurations with a grade > n will be included.
+        Minimum grade threshold; only configurations with a grade >= n will be included.
     """
     with open(input_file, "r", encoding="utf-8") as infile, open(
         output_file, "w", encoding="utf-8", newline="\n"

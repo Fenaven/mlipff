@@ -8,7 +8,7 @@ from utils import (
     cut_dump,
     filter_by_grade,
 )
-from frames_processing import process_multiple_frames
+from learn_from_files import preprocess_multiple_frames
 from cli import parse_arguments, get_parser
 
 
@@ -51,7 +51,7 @@ def handle_cut_nbh(args):
 
 def handle_create_input(args):
     if args.orca:
-        generate_orca_input(args.input_file, args.xyz_file)
+        generate_orca_input(args.input_file, args.xyz_file, args.output_file)
     elif args.lmp:
         modify_lammps_data(args.input_file, args.xyz_file)
 
@@ -61,7 +61,7 @@ def handle_cut_dump(args):
 
 
 def handle_process_frames(args):
-    process_multiple_frames(args.num_frames, args.file_prefix, args.radius, args.cut)
+    preprocess_multiple_frames(args.num_frames, args.file_prefix, args.radius, args.cut)
 
 
 def handle_filter_by_grade(args):

@@ -118,6 +118,7 @@ def add_create_input_subparser(subparsers):
     )
     input_parser.add_argument(
         "--input",
+        "-i",
         dest="input_file",
         required=True,
         help="Input file path.",
@@ -127,6 +128,13 @@ def add_create_input_subparser(subparsers):
         dest="xyz_file",
         required=True,
         help="XYZ file path.",
+    )
+    input_parser.add_argument(
+        "--output",
+        "-o",
+        dest="output_file",
+        required=True,
+        help="Output file path.",
     )
 
 
