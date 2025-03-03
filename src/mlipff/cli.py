@@ -104,7 +104,7 @@ def add_create_input_subparser(subparsers):
     """Add the 'create_input' subparser."""
     input_parser = subparsers.add_parser(
         "create_input",
-        help="Create Orca input file using .xyz file",
+        help="Create Orca or LAMMPS input file using .xyz file and input template",
     )
     input_parser.add_argument(
         "--orca",
@@ -142,7 +142,7 @@ def add_cut_nbh_subparser(subparsers):
     """Add the 'cut_nbh' subparser."""
     cut_nbh_parser = subparsers.add_parser(
         "cut_nbh",
-        help="Cut molecule using a sphere selection. Cutting from cfg requires having *.cfg_types file",
+        help="Cut molecule using a sphere selection. Cutting from cfg or dump requires element_types file present",
     )
     cut_nbh_parser.add_argument(
         "--input",
@@ -287,7 +287,7 @@ def add_filter_by_grade_subparser(subparsers):
 def get_parser():
     """Create and return the argument parser with subcommands."""
     parser = argparse.ArgumentParser(
-        description="Tool for converting and manipulating configuration files."
+        description="CLI for using MLIP-FF related functions"
     )
     subparsers = parser.add_subparsers(dest="command", help="Sub-command to run")
 

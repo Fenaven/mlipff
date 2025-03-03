@@ -21,6 +21,7 @@ sdist/
 var/
 tests/
 tests_old/
+test_showcase/
 wheels/
 share/python-wheels/
 *.egg-info/
