@@ -187,9 +187,9 @@ def generate_orca_input(input_file: str, xyz_filename: str, output_file: str) ->
             # Replace the last part with the new filename
             if len(parts) == 4:
                 parts[-1] = xyz_filename
-                lines[i] = " ".join(parts) + "\n"
             elif len(parts) == 3:
                 parts.append(f" {xyz_filename}")
+            lines[i] = " ".join(parts)
             break
     if not success:
         print("Error: Please provide a valid input file containing *xyzfile signature")
