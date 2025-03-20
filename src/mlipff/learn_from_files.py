@@ -242,7 +242,7 @@ def process_and_train(
     """Main process: frame processing, training, filtering, and iterations."""
     process_frames(data_folder, processed_folder, num_frames, radius, cut)
     run_calculations(processed_folder)
-    return
+    #return
 
     while True:
         os.system(
@@ -328,7 +328,5 @@ project_root/
 │── logs/                # Stores output logs
 │   ├── train.out
 │   ├── selection.out
-│   └── ...
-└── main.py              # Main script (this script)
-
+│   └── ...             
 """
